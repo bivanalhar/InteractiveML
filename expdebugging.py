@@ -19,110 +19,74 @@ from nltk.tokenize import word_tokenize
 
 vocab_list = []
 cond_probability = {}
+stopwords = []
 
-#extract the vocabulary from the sentence
-def extractVocabulary(sentence):
-	global vocab_list, cond_probability
+#extracting all the words inside the stopwords
+with open("./stopwords.txt", "r", errors = 'ignore') as stopfile:
+	stoplines = stopfile.readlines()
 
-	token_word = word_tokenize(sentence)
-	token_word = [word.lower() for word in token_word if word.isalpha()]
+stoplines = [line.strip() for line in stoplines if line.strip() is not '']
 
-	for word in token_word:
-		if word not in vocab_list:
-			vocab_list.append(word)
-			cond_probability[word] = [0, 0]
+#accessing the first class
+for files in os.listdir("./train/class1"):
+	with open("./train/class1/" + files, "r", errors = 'ignore') as file:
+		lines = file.readlines()
 
-#gathering all the vocabulary inside the data
-#here we limit the number of vocabulary evaluated into around 10000
-def gatherVocabulary():
-	global vocab_list
+	lines = [line.strip() for line in lines if line.strip() is not '']
 
-	#extract the vocabulary from the class 1
-	for files in os.listdir("./train/class1"):
-		with open("./train/class1/" + files, "r", errors='ignore') as file:
-			lines = file.readlines()
+	#either add vocabulary or increment the value of the existing one
+	for line in lines:
+		token_line = word_tokenize(line)
+		token_line = [word.lower() for word in token_line if word.isalpha()]
 
-		lines = [line.strip() for line in lines if line.strip() is not '']
-		for line in lines:
-			extractVocabulary(line)
-		if len(vocab_list) > 5000:
-			break
-	vocab_list = vocab_list[:5000]
+		for word in token_line:
+			if word not in stoplines:
+				#if we need to add word in the vocabulary list
+				if word not in vocab_list and len(vocab_list) < 10000:
+					vocab_list.append(word)
+					cond_probability[word] = [1.0, 0.0]
 
-	#extract the vocabulary from the class 2
-	for files in os.listdir("./train/class2"):
-		with open("./train/class2/" + files, "r", errors='ignore') as file:
-			lines = file.readlines()
+				#if we only need to increment the value inside the dictionary
+				else:
+					cond_probability[word][0] += 1.0
 
-		lines = [line.strip() for line in lines if line.strip() is not '']		
-		for line in lines:
-			extractVocabulary(line)
-		if len(vocab_list) > 10000:
-			break
-	vocab_list = vocab_list[:10000]
+#accessing the second class
+for files in os.listdir("./train/class2"):
+	with open("./train/class2/" + files, "r", errors = 'ignore') as file:
+		lines = file.readlines()
 
-#defining the conditional probability for both classes
-def calculateCondProbability():
-	#accessing all the training documents
-	for files in os.listdir("./train/class1"):
-		file = open("./train/class1/" + files, "r", errors='ignore')
-		for line in file:
-			token_line = word_tokenize(line)
-			token_line = [word.lower() for word in token_line if word.isalpha()]
+	lines = [line.strip() for line in lines if line.strip() is not '']
 
-			for word in token_line:
-				if word in vocab_list:
-					cond_probability[word][0] += 1
-		file.close()
+	#either add vocabulary or increment the value of the existing one
+	for line in lines:
+		token_line = word_tokenize(line)
+		token_line = [word.lower() for word in token_line if word.isalpha()]
 
-	for files in os.listdir("./train/class2"):
-		file = open("./train/class2/" + files, "r", errors='ignore')
-		for line in file:
-			token_line = word_tokenize(line)
-			token_line = [word.lower() for word in token_line if word.isalpha()]
+		for word in token_line:
+			if word not in stoplines:
+				#if we need to add word in the vocabulary list
+				if word not in vocab_list and len(vocab_list) < 20000:
+					vocab_list.append(word)
+					cond_probability[word] = [0.0, 1.0]
 
-			for word in token_line:
-				if word in vocab_list:
-					cond_probability[word][1] += 1
-		file.close()
+				#if we only need to increment the value inside the dictionary
+				else:
+					cond_probability[word][1] += 1.0
 
-#defining the prior probability of both classes
-def calculatePriorProbability():
-	count_class1 = 0
-	count_class2 = 0
+#calculating the prior class probability
+count_class1 = 0
+count_class2 = 0
 
-	#counting on the number of messages on class 1
-	for files in os.listdir("./train/class1"):
-		count_class1 += 1
+#counting on the number of messages on class 1
+for files in os.listdir("./train/class1"):
+	count_class1 += 1
 
-	#counting on the number of messages on class 2
-	for files in os.listdir("./train/class2"):
-		count_class2 += 1
+#counting on the number of messages on class 2
+for files in os.listdir("./train/class2"):
+	count_class2 += 1
 
-	count_class = float(count_class1 + count_class2)
+count_class = float(count_class1 + count_class2)
 
-	#calculating the prior probability of each class
-	prior_class1 = count_class1 / count_class
-	prior_class2 = count_class2 / count_class
-
-	return prior_class1, prior_class2
-
-#defining the training process of the Naive Bayes Classifier
-def trainDataset():
-	pass
-
-#defining the testing process of the Naive Bayes Classifier
-def testDataset():
-	pass
-
-#defining the main function
-def main():
-	gatherVocabulary()
-	calculateCondProbability()
-	calculatePriorProbability()
-
-	for element in cond_probability:
-		if cond_probability[element] == [0,0]:
-			print(element)
-
-main()
+#calculating the prior probability of each class
+prior_class1 = count_class1 / count_class
+prior_class2 = count_class2 / count_class
