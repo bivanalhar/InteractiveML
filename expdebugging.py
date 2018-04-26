@@ -157,3 +157,28 @@ for files in os.listdir("./test/class2"):
 correct_guess = firstfile[0] + secondfile[1]
 wrong_guess = firstfile[1] + secondfile[0]
 print("Accuracy for the test dataset is " + str(correct_guess * 100 / (correct_guess + wrong_guess)))
+
+#now start for the interactive part
+#Part 1 : Explainability
+
+input_file = raw_input("please enter the document code that wants to be explained: ")
+
+try:
+	file_input = open("./test/class1/" + input_file, "r", errors = 'ignore')
+	file_lines = file_input.readlines()
+	file_input.close()
+except:
+	print("Sorry, no such file\n")
+
+word_list = []
+for line in file_lines:
+	token_line = word_tokenize(line)
+	token_line = [word.lower() for word in token_line if word.isalpha()]
+
+	token_line = [word for word in token_line if word in vocab_list]
+
+	for word in token_line:
+		if word not in word_list:
+			word_list.append(word)
+
+#begin to explain the reasoning behind the prediction
