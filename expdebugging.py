@@ -90,3 +90,70 @@ count_class = float(count_class1 + count_class2)
 #calculating the prior probability of each class
 prior_class1 = count_class1 / count_class
 prior_class2 = count_class2 / count_class
+
+#begin to implement the naive bayes classification
+#Step 1 : calculating the probability for each word
+for word in cond_probability:
+
+	#smoothing the term for the probability calculation
+	cond_probability[word][0] += 1.0
+	cond_probability[word][1] += 1.0
+
+	#calculating the probability for each word
+	cond_total_word = cond_probability[word][0] + cond_probability[word][1]
+	cond_probability[word][0] = np.log(cond_probability[word][0]) - np.log(cond_total_word)
+	cond_probability[word][1] = np.log(cond_probability[word][1]) - np.log(cond_total_word)
+
+firstfile = [0,0]
+secondfile = [0,0]
+
+#Step 2 : calculating the probability for the test dataset
+for files in os.listdir("./test/class1"):
+	initial_prob = [0, 0]
+	with open("./test/class1/" + files, "r", errors = 'ignore') as file:
+		lines = file.readlines()
+
+	lines = [line.strip() for line in lines if line.strip() is not '']
+
+	for line in lines:
+		token_line = word_tokenize(line)
+		token_line = [word.lower() for word in token_line if word.isalpha()]
+
+		token_line = [word for word in token_line if word in vocab_list]
+
+		for word in token_line:
+			initial_prob[0] += cond_probability[word][0]
+			initial_prob[1] += cond_probability[word][1]
+
+	if initial_prob[0] >= initial_prob[1]:
+		firstfile[0] += 1.0
+	else:
+		firstfile[1] += 1.0
+
+for files in os.listdir("./test/class2"):
+	initial_prob = [0, 0]
+	with open("./test/class2/" + files, "r", errors = 'ignore') as file:
+		lines = file.readlines()
+
+	lines = [line.strip() for line in lines if line.strip() is not '']
+
+	for line in lines:
+		token_line = word_tokenize(line)
+		token_line = [word.lower() for word in token_line if word.isalpha()]
+
+		token_line = [word for word in token_line if word in vocab_list]
+
+		for word in token_line:
+			initial_prob[0] += cond_probability[word][0]
+			initial_prob[1] += cond_probability[word][1]
+
+	# print(initial_prob[0], initial_prob[1])
+	if initial_prob[0] >= initial_prob[1]:
+		secondfile[0] += 1.0
+	else:
+		secondfile[1] += 1.0
+
+#measuring the accuracy of the classification
+correct_guess = firstfile[0] + secondfile[1]
+wrong_guess = firstfile[1] + secondfile[0]
+print("Accuracy for the test dataset is " + str(correct_guess * 100 / (correct_guess + wrong_guess)))
