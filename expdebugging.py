@@ -88,8 +88,8 @@ for files in os.listdir("./train/class2"):
 count_class = float(count_class1 + count_class2)
 
 #calculating the prior probability of each class
-prior_class1 = count_class1 / count_class
-prior_class2 = count_class2 / count_class
+prior_class1 = np.log(count_class1) - np.log(count_class)
+prior_class2 = np.log(count_class2) - np.log(count_class)
 
 #begin to implement the naive bayes classification
 #Step 1 : calculating the probability for each word
@@ -109,7 +109,7 @@ secondfile = [0,0]
 
 #Step 2 : calculating the probability for the test dataset
 for files in os.listdir("./test/class1"):
-	initial_prob = [0, 0]
+	initial_prob = [prior_class1, prior_class2]
 	with open("./test/class1/" + files, "r", errors = 'ignore') as file:
 		lines = file.readlines()
 
@@ -131,7 +131,7 @@ for files in os.listdir("./test/class1"):
 		firstfile[1] += 1.0
 
 for files in os.listdir("./test/class2"):
-	initial_prob = [0, 0]
+	initial_prob = [prior_class1, prior_class2]
 	with open("./test/class2/" + files, "r", errors = 'ignore') as file:
 		lines = file.readlines()
 
@@ -161,24 +161,34 @@ print("Accuracy for the test dataset is " + str(correct_guess * 100 / (correct_g
 #now start for the interactive part
 #Part 1 : Explainability
 
-input_file = raw_input("please enter the document code that wants to be explained: ")
+input_file = input("please enter the document code that wants to be explained: ")
 
 try:
 	file_input = open("./test/class1/" + input_file, "r", errors = 'ignore')
 	file_lines = file_input.readlines()
 	file_input.close()
+
+	word_list = []
+	for line in file_lines:
+		token_line = word_tokenize(line)
+		token_line = [word.lower() for word in token_line if word.isalpha()]
+
+		token_line = [word for word in token_line if word in vocab_list]
+
+		for word in token_line:
+			if word not in word_list:
+				word_list.append(word)
+
+	#begin to explain the reasoning behind the prediction
+
+	#step for determining the most influential word in that file
+	#displaying the prior probability
+
+	if prior_class1 > prior_class2:
+		print("The Baseball folder has more messages than the Hockey folder")
+	else:
+		print("The Baseball folder has less messages than the Hockey folder")
+		
 except:
 	print("Sorry, no such file\n")
 
-word_list = []
-for line in file_lines:
-	token_line = word_tokenize(line)
-	token_line = [word.lower() for word in token_line if word.isalpha()]
-
-	token_line = [word for word in token_line if word in vocab_list]
-
-	for word in token_line:
-		if word not in word_list:
-			word_list.append(word)
-
-#begin to explain the reasoning behind the prediction
