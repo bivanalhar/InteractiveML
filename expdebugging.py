@@ -181,14 +181,18 @@ try:
 
 	#begin to explain the reasoning behind the prediction
 
+	print("\nthe prior probability of baseball: " + str(np.exp(prior_class1)))
+	print("the prior probability of hockey: " + str(np.exp(prior_class2)))
 	#step for determining the most influential word in that file
 	#displaying the prior probability
-
 	if prior_class1 > prior_class2:
-		print("The Baseball folder has more messages than the Hockey folder")
+		print("The Baseball folder has more messages than the Hockey folder\n")
 	else:
-		print("The Baseball folder has less messages than the Hockey folder")
+		print("The Baseball folder has less messages than the Hockey folder\n")
 		
+	#the next step is to display the conditional probability
+
+
 except:
 	print("Sorry, no such file\n")
 
