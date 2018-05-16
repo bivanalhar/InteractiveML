@@ -2,6 +2,8 @@ from tkinter import *
 from PIL import Image, ImageTk
 
 img_bool = True
+med_bool = True
+stat_bool = True
 
 class Window(Frame):
 
@@ -15,32 +17,44 @@ class Window(Frame):
 	def init_window(self):
 		#adding the operated button within the window
 		self.master.title("Debugging Interface")
-		self.master.geometry("500x400")
+		self.master.geometry("600x800")
 		self.master.configure(background = "lightblue")
 
 		self.pack(fill = BOTH, expand = 1)
+
 		quitbutton = Button(self, text = "Quit", command = self.client_exit)
-		quitbutton.place(x = 0, y = 0)
+		quitbutton.place(x = 550, y = 770)
 
-		imagebutton = Button(self, text = "Show Picture", command = self.showhideImage)
-		imagebutton.place(x = 0, y = 30)
+		imagebutton = Button(self, text = "Show Patient Info", command = self.showhideImage)
+		imagebutton.place(x = 0, y = 0)
 
-		#adding the menu bar within the window
-		menu = Menu(self.master)
-		self.master.config(menu = menu)
+		medbutton = Button(self, text = "Show Medical Info", command = self.showhideMedImage)
+		medbutton.place(x = 300, y = 0)
 
-		#adding the File onto the Menu Bar
-		file = Menu(menu)
-		file.add_command(label = "Exit", command = self.client_exit)
-		menu.add_cascade(label = "File", menu = file)
+		statbutton = Button(self, text = "Show Statistics Info", command = self.showhideStatImage)
+		statbutton.place(x = 0, y = 200)
 
-		#adding the Edit onto the Menu Bar
-		edit = Menu(menu)
-		edit.add_command(label = "Show Image", command = self.showImage)
-		edit.add_command(label = "Show Text", command = self.showText)
+		classifybut = Button(self, text = "Classify", command = self.classify)
+		classifybut.place(x = 300, y = 200)
 
-		menu.add_cascade(label = "Edit", menu = edit)
+		# #adding the menu bar within the window
+		# menu = Menu(self.master)
+		# self.master.config(menu = menu)
 
+		# #adding the File onto the Menu Bar
+		# file = Menu(menu)
+		# file.add_command(label = "Exit", command = self.client_exit)
+		# menu.add_cascade(label = "File", menu = file)
+
+		# #adding the Edit onto the Menu Bar
+		# edit = Menu(menu)
+		# edit.add_command(label = "Show Image", command = self.showImage)
+		# edit.add_command(label = "Show Text", command = self.showText)
+
+		# menu.add_cascade(label = "Edit", menu = edit)
+
+	###################################################################
+	#BEGIN Button 1: Showing the operation for the patients information
 	def showhideImage(self):
 		global img_bool
 
@@ -51,14 +65,15 @@ class Window(Frame):
 
 	#defining the operation to open the Image
 	def showImage(self):
-		kh = Image.open("kingdom_hearts.png")
-		render = ImageTk.PhotoImage(kh)
+		avatar = Image.open("male_avatar.png")
+		avatar = avatar.resize((150, 150), Image.ANTIALIAS)
+		render = ImageTk.PhotoImage(avatar)
 
 		global img, img_bool
 
 		img = Label(self, image=render)
 		img.image = render
-		img.place(x = 100, y = 100)
+		img.place(x = 0, y = 30)
 
 		img_bool = False
 
@@ -67,11 +82,85 @@ class Window(Frame):
 
 		img.destroy()
 		img_bool = True
+	#END Button 1
+	####################################################################
 
-	def showText(self):
-		text = Label(self, text = "Collection of Hearts")
-		text.pack()
-		text.place(x = 0, y = 370)
+	####################################################################
+	#BEGIN Button 2 : Showing the operation for the medical information
+	def showhideMedImage(self):
+		global med_bool
+
+		if med_bool:
+			self.showMedImage()
+		else:
+			self.hideMedImage()
+
+	#defining the operation to open the Image
+	def showMedImage(self):
+		medinfo = Image.open("mnist_info.png")
+		medinfo = medinfo.resize((150, 150), Image.ANTIALIAS)
+		render = ImageTk.PhotoImage(medinfo)
+
+		global med, med_bool
+
+		med = Label(self, image=render)
+		med.image = render
+		med.place(x = 300, y = 30)
+
+		med_bool = False
+
+	def hideMedImage(self):
+		global med, med_bool
+
+		med.destroy()
+		med_bool = True
+	#END Button 2
+	#####################################################################
+
+	#####################################################################
+	#BEGIN Button 3 : Showing the operation for the statistic information
+	def showhideStatImage(self):
+		global stat_bool
+
+		if stat_bool:
+			self.showStatImage()
+		else:
+			self.hideStatImage()
+
+	#defining the operation to open the Image
+	def showStatImage(self):
+		statinfo = Image.open("stat_info.png")
+		# statinfo = statinfo.resize((288, 174), Image.ANTIALIAS)
+		render = ImageTk.PhotoImage(statinfo)
+
+		global stat, stat_bool
+
+		stat = Label(self, image=render)
+		stat.image = render
+		stat.place(x = 0, y = 230)
+
+		stat_bool = False
+
+	def hideStatImage(self):
+		global stat, stat_bool
+
+		stat.destroy()
+		stat_bool = True
+	#END Button 3
+	#####################################################################
+
+	#####################################################################
+	#BEGIN Button 4 : Classification Button
+	def classify(self):
+		print("classification not yet defined")
+
+	#END Button 4
+	#####################################################################
+
+	# def showText(self):
+	# 	text = Label(self, text = "Collection of Hearts")
+	# 	text.pack()
+	# 	text.place(x = 0, y = 370)
 
 	#defining the operation for the quit button
 	def client_exit(self):
