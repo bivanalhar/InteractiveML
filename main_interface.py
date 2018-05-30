@@ -1,9 +1,32 @@
+import pickle
 from tkinter import *
 from PIL import Image, ImageTk
 
 #the main interface will provide the main screen
 #of the program in general. this will just contain the
 #2 buttons, one for the doctor and one for the patient
+with open("save_tuple.pickle", "rb") as file:
+	doc, pat = pickle.load(file)
+
+print("the current probability of doctor seeing complex is {0:.2f}".format(float(doc[0])/(doc[0] + doc[1])))
+print("the current probability of patient seeing simple is {0:.2f}\n".format(float(pat[1])/(pat[0] + pat[1])))
+
+try:
+	init = int(input("do you want to initialize the probability into 0.7 and 0.8?\n(0)no and (1)yes\n"))
+	assert (init == 0 or init == 1)
+except:
+	print("Invalid input (the input should be only 0 or 1)")
+	raise
+
+if init == 1:
+	print("initializing")
+	import init_pickling
+
+	with open("save_tuple.pickle", "rb") as file:
+		doc, pat = pickle.load(file)
+
+if init == 0:
+	print("proceeding\n")
 
 class Window(Frame):
 
@@ -12,27 +35,35 @@ class Window(Frame):
 		Frame.__init__(self, master)
 		self.master = master
 
+		self.init_doctor_var()
+		self.init_patient_var()
+
+		self.init_doctor = doc #for the prior probability of the interface outcome
+		self.init_patient = pat #for the prior probability of the interface outcome
+
+		self.init_window()
+
+	#initializing all the doctor-related variables
+	def init_doctor_var(self):
 		self.img_bool = True
 		self.med_bool = True
 		self.stat_bool = True
 
+		self.is_doctor = 0
+
+	#initializing all the patient-related variables
+	def init_patient_var(self):
 		self.img_bool_patient = True
 		self.med_bool_patient = True
 		self.text_bool = True
 
-		self.is_doctor = 0
 		self.is_patient = 0
-
-		self.init_doctor = [14, 6] #for the prior probability of the interface outcome
-		self.init_patient = [4, 16] #for the prior probability of the interface outcome
-
-		self.init_window()
 
 	#create the window through the function init_window
 	def init_window(self):
 		#adding the operated button within the window
 		self.master.title("Main")
-		self.master.geometry("150x150")
+		self.master.geometry("150x100")
 
 		self.pack(fill = BOTH, expand = 1)
 
@@ -48,7 +79,7 @@ class Window(Frame):
 
 	def checkDoctor(self):
 		probability = self.init_doctor[0] / float(self.init_doctor[0] + self.init_doctor[1])
-		print("Doctor : probability of showing doctor is {0:.5f}".format(probability))
+		print("Doctor : probability of showing doctor is {0:.2f}".format(probability))
 
 		if self.init_doctor[0] > self.init_doctor[1]:
 			self.showDoctor()
@@ -57,7 +88,7 @@ class Window(Frame):
 
 	def checkPatient(self):
 		probability = self.init_patient[1] / float(self.init_patient[0] + self.init_patient[1])
-		print("Patient : probability of showing doctor is {0:.5f}".format(probability))
+		print("Patient : probability of showing patient is {0:.2f}".format(probability))
 
 		if self.init_patient[0] >= self.init_patient[1]:
 			self.showDoctor()
@@ -74,7 +105,7 @@ class Window(Frame):
 
 		#will show the interface for the Doctor information
 		top = self.top = Toplevel(bg = "lightblue")
-		top.title("Doctor Interface")
+		top.title("Complex Explanation Interface")
 
 		top.geometry("600x650")
 
@@ -103,7 +134,7 @@ class Window(Frame):
 		self.is_patient = 1
 
 		top = self.top2 = Toplevel(bg = "orange")
-		top.title("Patient Interface")
+		top.title("Simple Explanation Interface")
 
 		top.geometry("600x650")
 
@@ -173,7 +204,7 @@ class Window(Frame):
 		self.img2.destroy()
 		self.img_bool_patient = True
 	####################################################################
-	########################END Button 1a###############################
+	########################END Button 1b###############################
 	####################################################################
 
 	####################################################################
@@ -291,16 +322,25 @@ class Window(Frame):
 	def quitDoctor(self):
 		self.is_doctor = 0
 		self.top.destroy()
+		
+		self.init_doctor_var()
 
 	def quitPatient(self):
 		self.is_patient = 0
 		self.top2.destroy()
+
+		self.init_patient_var()
 
 	def switchDoctor(self):
 		self.quitPatient()
 
 		self.init_doctor[0] += 1
 		self.init_patient[0] += 1
+
+		with open("save_tuple.pickle", "wb") as file:
+			pickle.dump((self.init_doctor, self.init_patient), file)
+
+		self.init_doctor_var()
 		
 		self.showDoctor()
 
@@ -309,6 +349,11 @@ class Window(Frame):
 
 		self.init_doctor[1] += 1
 		self.init_patient[1] += 1
+
+		with open("save_tuple.pickle", "wb") as file:
+			pickle.dump((self.init_doctor, self.init_patient), file)
+
+		self.init_patient_var()
 
 		self.showPatient()
 	####################################################################
