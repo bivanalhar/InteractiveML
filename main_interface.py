@@ -12,20 +12,20 @@ print("the current probability of doctor seeing complex is {0:.2f}".format(float
 print("the current probability of patient seeing simple is {0:.2f}\n".format(float(pat[1])/(pat[0] + pat[1])))
 
 try:
-	init = int(input("do you want to initialize the probability into 0.7 and 0.8?\n(0)no and (1)yes\n"))
-	assert (init == 0 or init == 1)
+	init = input("do you want to initialize the probability into 0.7 and 0.8?\n(0)no and (1)yes\n")
+	assert (init == '0' or init == '1' or init == '')
 except:
 	print("Invalid input (the input should be only 0 or 1)")
 	raise
 
-if init == 1:
-	print("initializing")
+if init == '1':
+	print("initializing\n")
 	import init_pickling
 
 	with open("save_tuple.pickle", "rb") as file:
 		doc, pat = pickle.load(file)
 
-if init == 0:
+if init == '0' or init == '':
 	print("proceeding\n")
 
 class Window(Frame):
@@ -35,24 +35,25 @@ class Window(Frame):
 		Frame.__init__(self, master)
 		self.master = master
 
-		self.init_doctor_var()
-		self.init_patient_var()
+		self.init_complex_var()
+		self.init_simple_var()
 
-		self.init_doctor = doc #for the prior probability of the interface outcome
-		self.init_patient = pat #for the prior probability of the interface outcome
+		self.init_complex = doc #for the prior probability of the interface outcome
+		self.init_simple = pat #for the prior probability of the interface outcome
 
 		self.init_window()
 
 	#initializing all the doctor-related variables
-	def init_doctor_var(self):
+	def init_complex_var(self):
 		self.img_bool = True
 		self.med_bool = True
 		self.stat_bool = True
+		self.text2_bool = True
 
 		self.is_doctor = 0
 
 	#initializing all the patient-related variables
-	def init_patient_var(self):
+	def init_simple_var(self):
 		self.img_bool_patient = True
 		self.med_bool_patient = True
 		self.text_bool = True
@@ -68,34 +69,34 @@ class Window(Frame):
 		self.pack(fill = BOTH, expand = 1)
 
 		#the initial window just contains the doctor and patient button
-		doctorbutton = Button(self, text = "Doctor Information", command = self.checkDoctor)
+		doctorbutton = Button(self, text = "Doctor", command = self.checkDoctor, bg = "lightblue")
 		doctorbutton.pack(fill = X)
 
-		patientbutton = Button(self, text = "Patient Information", command = self.checkPatient)
+		patientbutton = Button(self, text = "Patient", command = self.checkPatient, bg = "orange")
 		patientbutton.pack(fill = X)
 
 		exitbutton = Button(self, text = "Exit", command = self.client_exit)
 		exitbutton.pack(fill = X)
 
 	def checkDoctor(self):
-		probability = self.init_doctor[0] / float(self.init_doctor[0] + self.init_doctor[1])
-		print("Doctor : probability of showing doctor is {0:.2f}".format(probability))
+		probability = self.init_complex[0] / float(self.init_complex[0] + self.init_complex[1])
+		print("Doctor : probability of showing complex is {0:.2f}".format(probability))
 
-		if self.init_doctor[0] > self.init_doctor[1]:
-			self.showDoctor()
+		if self.init_complex[0] > self.init_complex[1]:
+			self.showComplex()
 		else:
-			self.showPatient()
+			self.showSimple()
 
 	def checkPatient(self):
-		probability = self.init_patient[1] / float(self.init_patient[0] + self.init_patient[1])
-		print("Patient : probability of showing patient is {0:.2f}".format(probability))
+		probability = self.init_simple[1] / float(self.init_simple[0] + self.init_simple[1])
+		print("Patient : probability of showing simple is {0:.2f}".format(probability))
 
-		if self.init_patient[0] >= self.init_patient[1]:
-			self.showDoctor()
+		if self.init_simple[0] >= self.init_simple[1]:
+			self.showComplex()
 		else:
-			self.showPatient()
+			self.showSimple()
 
-	def showDoctor(self):
+	def showComplex(self):
 		# import doctor_interface
 		if self.is_doctor == 1:
 			print("The Doctor interface is already opened")
@@ -107,7 +108,7 @@ class Window(Frame):
 		top = self.top = Toplevel(bg = "lightblue")
 		top.title("Complex Explanation Interface")
 
-		top.geometry("600x650")
+		top.geometry("1000x650")
 
 		imagebutton = Button(top, text = "Show Patient Info", command = self.showhideImage)
 		imagebutton.place(x = 0, y = 10)
@@ -118,13 +119,16 @@ class Window(Frame):
 		statbutton = Button(top, text = "Show Statistics Info", command = self.showhideStatImage)
 		statbutton.place(x = 0, y = 200)
 
-		switchbutton = Button(top, text = "Switch to Patient Interface", command = self.switchPatient)
+		switchbutton = Button(top, text = "Switch to Simple Interface", command = self.switchSimple)
 		switchbutton.place(x = 0, y = 600)
 
-		quitbutton = Button(top, text = "Quit Doctor", command = self.quitDoctor)
+		textbutton = Button(top, text = "Show Text Info", command = self.showhideTextImageComplex)
+		textbutton.place(x = 600, y = 10)
+
+		quitbutton = Button(top, text = "Quit Complex", command = self.quitComplex)
 		quitbutton.place(x = 300, y = 600)
 
-	def showPatient(self):
+	def showSimple(self):
 		#will show the interface for the Patient information
 
 		if self.is_patient == 1:
@@ -147,10 +151,10 @@ class Window(Frame):
 		textbutton = Button(top, text = "Show Text Info", command = self.showhideTextImage)
 		textbutton.place(x = 0, y = 200)
 
-		switchbutton = Button(top, text = "Switch to Doctor Interface", command = self.switchDoctor)
+		switchbutton = Button(top, text = "Switch to Complex Interface", command = self.switchComplex)
 		switchbutton.place(x = 0, y = 600)
 
-		quitbutton = Button(top, text = "Quit Patient", command = self.quitPatient)
+		quitbutton = Button(top, text = "Quit Simple", command = self.quitSimple)
 		quitbutton.place(x = 300, y = 600)
 
 	###################################################################
@@ -272,6 +276,12 @@ class Window(Frame):
 	#defining the operation to open the Image
 	def showStatImage(self):
 		statinfo = Image.open("stat_info.png")
+		width, height = statinfo.size
+
+		width = int(width * 0.8)
+		height = int(height * 0.8)
+
+		statinfo = statinfo.resize((width, height), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(statinfo)
 
 		self.stat = Label(self.top, image=render)
@@ -318,44 +328,74 @@ class Window(Frame):
 	####################################################################
 
 	####################################################################
-	#BEGIN Button 4 : Showing the operation for switching and quitting
-	def quitDoctor(self):
+	#BEGIN Button 4 : Showing the operation for the text info complex
+	def showhideTextImageComplex(self):
+		if self.text2_bool:
+			self.showTextImageComplex()
+		else:
+			self.hideTextImageComplex()
+
+	#defining the operation to open the Image
+	def showTextImageComplex(self):
+		self.text2 = Text(self.top, height = 6, width = 35, font = 12)
+
+		self.text2.pack()
+
+		self.text2.place(x = 600, y = 40)
+
+		result = "Prediction : 0\n"
+		result += "Closest Alternative : 6 or 9\n"
+		result += "Reason : Picture full of curvature"
+		self.text2.insert(END, result)
+
+		self.text2_bool = False
+
+	def hideTextImageComplex(self):
+		self.text2.delete(1.0, END)
+		self.text2_bool = True
+	####################################################################
+	########################END Button 3b###############################
+	####################################################################
+
+	####################################################################
+	#BEGIN Button 5 : Showing the operation for switching and quitting
+	def quitComplex(self):
 		self.is_doctor = 0
 		self.top.destroy()
 		
-		self.init_doctor_var()
+		self.init_complex_var()
 
-	def quitPatient(self):
+	def quitSimple(self):
 		self.is_patient = 0
 		self.top2.destroy()
 
-		self.init_patient_var()
+		self.init_simple_var()
 
-	def switchDoctor(self):
-		self.quitPatient()
+	def switchComplex(self):
+		self.quitSimple()
 
-		self.init_doctor[0] += 1
-		self.init_patient[0] += 1
+		self.init_complex[0] += 1
+		self.init_simple[0] += 1
 
 		with open("save_tuple.pickle", "wb") as file:
-			pickle.dump((self.init_doctor, self.init_patient), file)
+			pickle.dump((self.init_complex, self.init_simple), file)
 
-		self.init_doctor_var()
+		self.init_complex_var()
 		
-		self.showDoctor()
+		self.showComplex()
 
-	def switchPatient(self):
-		self.quitDoctor()
+	def switchSimple(self):
+		self.quitComplex()
 
-		self.init_doctor[1] += 1
-		self.init_patient[1] += 1
+		self.init_complex[1] += 1
+		self.init_simple[1] += 1
 
 		with open("save_tuple.pickle", "wb") as file:
-			pickle.dump((self.init_doctor, self.init_patient), file)
+			pickle.dump((self.init_complex, self.init_simple), file)
 
-		self.init_patient_var()
+		self.init_simple_var()
 
-		self.showPatient()
+		self.showSimple()
 	####################################################################
 	########################END Button 4################################
 	####################################################################
