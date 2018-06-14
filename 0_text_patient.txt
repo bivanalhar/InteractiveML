@@ -1,0 +1,8 @@
+Prediction : 0
+
+Analysis :
+1. Forming the almost complete circle with some tail
+2. Tail is inside the circle, thus little relevance
+
+Suggestion :
+Consult more with specialist to get more accurate analysis
