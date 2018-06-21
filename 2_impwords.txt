@@ -1,0 +1,3 @@
+blur, 20
+LETTER-S, 40
+ANGLE, 12 
