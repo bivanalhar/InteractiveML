@@ -447,7 +447,7 @@ class Window(Frame):
 		name_list = []
 		id_list = []
 
-		for x in prediction[0].argsort()[0][-5:]:
+		for x in prediction[0].argsort()[0][-3:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
 			id_list.insert(0, x)
 
@@ -455,31 +455,37 @@ class Window(Frame):
 		explainer = lime_image.LimeImageExplainer()
 
 		#Step 3 : Create the button for each of the 5 best predictions
-		button_1 = Button(self.top_complex, text = name_list[0], command = lambda: self.ExplainAndShow(id_ = id_list[0], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 32)
+		button_1 = Button(self.top_complex, text = name_list[0], command = lambda: self.ExplainAndShow(name = name_list[0], id_ = id_list[0], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 27)
 		button_1.place(x = 675, y = 300)
 
-		button_2 = Button(self.top_complex, text = name_list[1], command = lambda: self.ExplainAndShow(id_ = id_list[1], explainer = explainer, image = prediction[1]), bg = "tan", width = 32)
+		button_2 = Button(self.top_complex, text = name_list[1], command = lambda: self.ExplainAndShow(name = name_list[1], id_ = id_list[1], explainer = explainer, image = prediction[1]), bg = "tan", width = 27)
 		button_2.place(x = 675, y = 330)
 
-		button_3 = Button(self.top_complex, text = name_list[2], command = lambda: self.ExplainAndShow(id_ = id_list[2], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 32)
+		button_3 = Button(self.top_complex, text = name_list[2], command = lambda: self.ExplainAndShow(name = name_list[2], id_ = id_list[2], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 27)
 		button_3.place(x = 675, y = 360)
 
-		button_4 = Button(self.top_complex, text = name_list[3], command = lambda: self.ExplainAndShow(id_ = id_list[3], explainer = explainer, image = prediction[1]), bg = "tan", width = 32)
-		button_4.place(x = 675, y = 390)
+	def ExplainAndShow(self, name = None, id_ = None, explainer = None, image = None):
+		if self.explain_bool or (id_ != self.id_current):
+			frame_bio = Frame(self.top_complex, height = 40, width = 245)
+			frame_bio.pack_propagate(False)
+			frame_bio.place(x = 675, y = 400)
 
-		button_5 = Button(self.top_complex, text = name_list[4], command = lambda: self.ExplainAndShow(id_ = id_list[4], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 32)
-		button_5.place(x = 675, y = 420)
+			self.title_pict = Text(frame_bio, height = 2, width = 28, font = ("Helvetica", 15), bg = "yellow")
+			text_list_t = name
 
-	def ExplainAndShow(self, id_ = None, explainer = None, image = None):
-		explanation = explainer.explain_instance(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
+			self.title_pict.insert(END, text_list_t)
+			self.title_pict.tag_configure("center", justify = 'center')
+			self.title_pict.tag_add('center', '1.0', 'end')
+			self.title_pict.config(state = DISABLED)
+			self.title_pict.pack()
 
-		temp, mask = explanation.get_image_and_mask(id_, positive_only = False, num_features = 5, hide_rest = False)
+			explanation, segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
+			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 50, hide_rest = False)
+			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (0,0,0))
+			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
-		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
+			self.id_current = id_
 
-		plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
-
-		if self.explain_bool:
 			explain_info = Image.open("explain_complex.jpeg")
 			explain_info = explain_info.resize((240, 240), Image.ANTIALIAS)
 			render = ImageTk.PhotoImage(explain_info)
@@ -491,6 +497,7 @@ class Window(Frame):
 			self.explain_bool = False
 
 		else:
+			self.title_pict.destroy()
 			self.explain.destroy()
 			self.explain_bool = True
 
@@ -558,9 +565,10 @@ class Window(Frame):
 
 		explanation = explainer.explain_instance(prediction[1], predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
 
-		temp, mask = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 5, hide_rest = False)
+		temp, mask = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
-		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
+		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
+		img_save = temp / 2 + 0.5
 
 		plt.imsave(fname = "explain_simple.jpeg", arr = img_save)
 
