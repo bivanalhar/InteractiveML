@@ -120,6 +120,8 @@ class Window(Frame):
 		self.text_bool = True
 		self.explain_bool = True
 
+		self.segments = None
+
 		self.is_doctor = 0
 
 	#initializing all the patient-related variables
@@ -198,7 +200,7 @@ class Window(Frame):
 		top = self.top_complex = Toplevel(bg = "lightblue")
 		top.title("Complex Explanation Interface")
 
-		top.geometry("1000x725")
+		top.geometry("950x725")
 
 		# 1.1) Displaying the Label Image of the Patient
 		frame_info = Frame(top, height = 30, width = 200)
@@ -222,7 +224,7 @@ class Window(Frame):
 		self.img.place(x = 0, y = 30)
 
 		# 2) Displaying the personal information about the Patient
-		frame_bio = Frame(top, height = 230, width = 600)
+		frame_bio = Frame(top, height = 230, width = 550)
 		frame_bio.pack_propagate(False)
 		frame_bio.place(x=200, y=0)
 
@@ -242,7 +244,7 @@ class Window(Frame):
 		# 3) Displaying the Medical Information of the Patient
 		frame_info_2 = Frame(top, height = 30, width = 200)
 		frame_info_2.pack_propagate(False)
-		frame_info_2.place(x=800, y=0)
+		frame_info_2.place(x=750, y=0)
 
 		med_info = Text(frame_info_2, height = 20, width = 30, font = ("Helvetica", 14), bg = "aquamarine")
 		med_info.tag_configure("center", justify = "center")
@@ -257,22 +259,25 @@ class Window(Frame):
 
 		self.med = Label(top, image=render)
 		self.med.image = render
-		self.med.place(x = 800, y = 30)
+		self.med.place(x = 750, y = 30)
 
 		barbutton = Button(top, text = "Stats for Prediction", command = lambda: self.CalcAndShowBarChart(id_ = id_))
-		barbutton.place(x = 0, y = 250)
+		barbutton.place(x = 20, y = 250)
 
 		textbutton = Button(top, text = "Lists of Prediction", command = lambda: self.CalcAndShowTextPred(id_ = id_))
-		textbutton.place(x = 325, y = 250)
+		textbutton.place(x = 345, y = 250)
 
 		explainbutton = Button(top, text = "Explanation for Prediction", command = lambda: self.CalcExplainAndShow(id_ = id_))
 		explainbutton.place(x = 675, y = 250)
 
 		switchbutton = Button(top, text = "Switch to Simple Interface", command = lambda: self.switchSimple(id_ = id_), width = 35)
-		switchbutton.place(x = 0, y = 640)
+		switchbutton.place(x = 20, y = 640)
 
 		quitbutton = Button(top, text = "Quit Complex", command = self.quitComplex, width = 35)
-		quitbutton.place(x = 0, y = 670)
+		quitbutton.place(x = 20, y = 670)
+
+		fixpredbutton = Button(top, text = "Fix the Prediction", command = self.interactiveFixing, width = 34, height = 3)
+		fixpredbutton.place(x = 345, y = 640)
 
 	def showSimple(self, id_ = None):
 		top = self.top_simple = Toplevel(bg = "wheat")
@@ -395,12 +400,12 @@ class Window(Frame):
 
 	def showBarChart(self, id_ = None):
 		bar_info = Image.open(str(id_) + "_statchart.jpeg")
-		bar_info = bar_info.resize((285, 300), Image.ANTIALIAS)
+		bar_info = bar_info.resize((300, 320), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(bar_info)
 
 		self.bar = Label(self.top_complex, image=render)
 		self.bar.image = render
-		self.bar.place(x = 0, y = 300)
+		self.bar.place(x = 20, y = 300)
 
 		self.stat_bool = False
 
@@ -420,11 +425,11 @@ class Window(Frame):
 
 		#Step 2 : Show or hide the text for showing prediction
 		if self.text_bool:
-			frame_bio = Frame(self.top_complex, height = 400, width = 290)
+			frame_bio = Frame(self.top_complex, height = 320, width = 300)
 			frame_bio.pack_propagate(False)
-			frame_bio.place(x = 325, y = 300)
+			frame_bio.place(x = 345, y = 300)
 
-			self.text_list = Text(frame_bio, height = 18, width = 35, font = ("Helvetica", 11), bg = "lightpink")
+			self.text_list = Text(frame_bio, height = 15, width = 40, font = ("Helvetica", 11), bg = "lightpink")
 			text_list_t = ""
 			
 			for i in range(len(name_list) - 1):
@@ -479,9 +484,9 @@ class Window(Frame):
 			self.title_pict.config(state = DISABLED)
 			self.title_pict.pack()
 
-			explanation, segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
+			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
 			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 50, hide_rest = False)
-			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (0,0,0))
+			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
 			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
 			self.id_current = id_
@@ -556,19 +561,19 @@ class Window(Frame):
 		name_list = []
 		id_list = []
 
-		for x in prediction[0].argsort()[0][-5:]:
+		for x in prediction[0].argsort()[0][-1:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
 			id_list.insert(0, x)
 
 		#Step 2 : Get the explanation for the prediction
 		explainer = lime_image.LimeImageExplainer()
 
-		explanation = explainer.explain_instance(prediction[1], predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
+		explanation, segments = explainer.explain_instance_and_get_segments(prediction[1], predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
 
-		temp, mask = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
+		temp, _ = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
 		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
-		img_save = temp / 2 + 0.5
+		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments)
 
 		plt.imsave(fname = "explain_simple.jpeg", arr = img_save)
 
@@ -586,7 +591,31 @@ class Window(Frame):
 		else:
 			self.simplexplain.destroy()
 			self.simplexplain_bool = True
-		
+	
+	def interactiveFixing(self):
+		if self.segments.all() == None:
+			print("Image explanation not here.\nPlease click on the Explaining the Prediction button\nand choose one to be explained")
+
+		else:
+			top = self.top_picture = Toplevel(bg = "grey")
+			top.title("Editing the Picture")
+
+			top.geometry("300x300")
+
+			canvas = Canvas(self.top_picture, width = 300, height = 300)
+			canvas.pack(expand = YES, fill = BOTH)
+
+			open_file = Image.open("explain_complex.jpeg")
+			img = ImageTk.PhotoImage(open_file)
+
+			canvas.image = img
+
+			canvas.create_image(0, 0, image = img, anchor = "nw")
+			canvas.bind("<Button 1>", self.printcoords)
+
+	def printcoords(self, event):
+		print("Superpixel number #" + str(self.segments[event.y, event.x]))
+
 	####################################################################
 	#BEGIN Button 7 : Showing the operation for switching and quitting
 	def quitComplex(self):
