@@ -1,3 +1,0 @@
-ANGLE, 30
-STRAIGHT, 20
-blur, 15

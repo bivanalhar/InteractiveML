@@ -1,8 +1,0 @@
-Prediction : 5
-
-Analysis :
-1. Forming the letter similar with the letter S
-2. Quite blurry, meaning that the prediction is not certain
-
-Suggestion :
-Consult more with specialist to get more accurate analysis

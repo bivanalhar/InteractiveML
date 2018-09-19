@@ -1,3 +1,0 @@
-CIRCLE, 30
-tail, 10
-OVAL, 16
