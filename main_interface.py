@@ -7,6 +7,8 @@ import tensorflow as tf
 import numpy as np
 from tkinter import *
 from PIL import Image, ImageTk
+import cifar10_func as cf
+import model
 
 import sys
 sys.path.append("/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim")
@@ -17,32 +19,28 @@ from nets import inception
 from preprocessing import inception_preprocessing
 
 session = tf.Session()
-image_size = inception.inception_v3.default_image_size
+image_size = 32 #the size of the CIFAR-10 images shall be 32x32, so all input should be converted into this size
 
 def transform_img_fn(path_list):
 	out = []
 	for f in path_list:
 		file = open(f, 'rb')
 		image_raw = tf.image.decode_jpeg(file.read(), channels=3)
-		image = inception_preprocessing.preprocess_image(image_raw, image_size, image_size, is_training=False)
+		image = inception_preprocessing.preprocess_image(image_raw, image_size, image_size, is_training = False)
 		out.append(image)
 	return session.run([out])[0]
 
-from datasets import imagenet
-names = imagenet.create_readable_names_for_imagenet_labels()
+names = cf.build_dictionary_for_cifar10_image()
 
-processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
+processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
 
-import os
-with slim.arg_scope(inception.inception_v3_arg_scope()):
-	logits, _ = inception.inception_v3(processed_images, num_classes=1001, is_training=False)
+logits, _, _, _ = model.conv_cifar10(processed_images)
 probabilities = tf.nn.softmax(logits)
 
-checkpoints_dir = '/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim/pretrained'
-init_fn = slim.assign_from_checkpoint_fn(
-	os.path.join(checkpoints_dir, 'inception_v3.ckpt'),
-	slim.get_model_variables('InceptionV3'))
-init_fn(session)
+saver = tf.train.Saver()
+
+checkpoints_dir = "./pretrained/cifar10_model.ckpt"
+saver.restore(session, "./pretrained/cifar10_model.ckpt")
 
 def predict_fn(images):
 	return session.run(probabilities, feed_dict={processed_images: images})

@@ -1,0 +1,6 @@
+model_checkpoint_path: "cifar10_model_1000.0.ckpt"
+all_model_checkpoint_paths: "cifar10_model_10.0.ckpt"
+all_model_checkpoint_paths: "cifar10_model_50.0.ckpt"
+all_model_checkpoint_paths: "cifar10_model_100.0.ckpt"
+all_model_checkpoint_paths: "cifar10_model_500.0.ckpt"
+all_model_checkpoint_paths: "cifar10_model_1000.0.ckpt"
