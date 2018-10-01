@@ -19,7 +19,8 @@ from nets import inception
 from preprocessing import inception_preprocessing
 
 session = tf.Session()
-image_size = 32 #the size of the CIFAR-10 images shall be 32x32, so all input should be converted into this size
+# image_size = 32 #the size of the CIFAR-10 images shall be 32x32, so all input should be converted into this size
+image_size = 299
 
 def transform_img_fn(path_list):
 	out = []
@@ -30,17 +31,30 @@ def transform_img_fn(path_list):
 		out.append(image)
 	return session.run([out])[0]
 
-names = cf.build_dictionary_for_cifar10_image()
+from datasets import imagenet
+names = imagenet.create_readable_names_for_imagenet_labels()
+# names = cf.build_dictionary_for_cifar10_image()
 
-processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
+processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
 
-logits, _, _, _ = model.conv_cifar10(processed_images)
+# logits, _, _, _ = model.conv_cifar10(processed_images)
+# probabilities = tf.nn.softmax(logits)
+
+# saver = tf.train.Saver()
+
+# checkpoints_dir = "./pretrained/cifar10_model.ckpt"
+# saver.restore(session, "./pretrained/cifar10_model.ckpt")
+
+import os
+with slim.arg_scope(inception.inception_v3_arg_scope()):
+    logits, _ = inception.inception_v3(processed_images, num_classes=1001, is_training=False)
 probabilities = tf.nn.softmax(logits)
 
-saver = tf.train.Saver()
-
-checkpoints_dir = "./pretrained/cifar10_model.ckpt"
-saver.restore(session, "./pretrained/cifar10_model.ckpt")
+checkpoints_dir = '/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim/pretrained'
+init_fn = slim.assign_from_checkpoint_fn(
+    os.path.join(checkpoints_dir, 'inception_v3.ckpt'),
+    slim.get_model_variables('InceptionV3'))
+init_fn(session)
 
 def predict_fn(images):
 	return session.run(probabilities, feed_dict={processed_images: images})
@@ -85,12 +99,12 @@ if init == '0' or init == '':
 	print("proceeding")
 
 patient_info = [[], [], [], [], [], []]
-patient_info[0] += ["Andy Williams", "Bivan Harmanto", "Choi Seungmin"]
-patient_info[1] += ["Male", "Male", "Male"]
-patient_info[2] += [35, 22, 27]
-patient_info[3] += ["AB Positive", "O Positive", "B Negative"]
-patient_info[4] += ["Professor", "Software Engineer", "Counsellor"]
-patient_info[5] += ["American", "Indonesian", "Korean"]
+patient_info[0] += ["Andy Williams", "Bivan Harmanto", "Choi Seungmin", "Alberta Scrubb", "Alisa Kurt", "Kim Eunhye"]
+patient_info[1] += ["Male", "Male", "Male", "Female", "Female", "Female"]
+patient_info[2] += [35, 22, 27, 50, 19, 21]
+patient_info[3] += ["AB Positive", "O Positive", "B Negative", "A Positive", "B Positive", "O Negative"]
+patient_info[4] += ["Professor", "Software Engineer", "Counsellor", "Housewife", "Chief Operating Officer", "Student"]
+patient_info[5] += ["American", "Indonesian", "Korean", "British", "Germanese", "Korean"]
 
 class Window(Frame):
 
@@ -118,6 +132,8 @@ class Window(Frame):
 		self.text_bool = True
 		self.explain_bool = True
 
+		self.sp_finish = False
+		self.list_sp_outcast = []
 		self.segments = None
 
 		self.is_doctor = 0
@@ -159,7 +175,7 @@ class Window(Frame):
 		top = self.top = Toplevel(bg = "white")
 		top.title("List of Patients")
 
-		top.geometry("300x300")
+		top.geometry("300x500")
 
 		button_1 = Button(top, text = "Patient #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
 		button_1.pack(fill = X)
@@ -169,6 +185,15 @@ class Window(Frame):
 
 		button_3 = Button(top, text = "Patient #3\nChoi Seungmin", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 2), bg = "salmon", height = 3)
 		button_3.pack(fill = X)
+
+		button_4 = Button(top, text = "Patient #4\nAlberta Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 3), bg = "turquoise", height = 3)
+		button_4.pack(fill = X)
+
+		button_5 = Button(top, text = "Patient #5\nAlisa Kurt", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 4), bg = "salmon", height = 3)
+		button_5.pack(fill = X)
+
+		button_6 = Button(top, text = "Patient #6\nKim Eunhye", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 5), bg = "turquoise", height = 3)
+		button_6.pack(fill = X)
 
 		quitbutton = Button(top, text = "Quit", command = self.quitPatient, bg = "red")
 		quitbutton.pack(fill = X)
@@ -362,8 +387,9 @@ class Window(Frame):
 		#do the calculation for the prediction towards the image, using pretrained model
 		path_name = str(id_) + '_medinfo.jpg'
 		images = transform_img_fn([path_name])
+		self.transformed_image = images[0]
 
-		return predict_fn(images), images[0]
+		return predict_fn(images), self.transformed_image
 
 	###################################################################################
 	####### BEGIN : Managing the button functionality for the complex interface #######
@@ -565,9 +591,7 @@ class Window(Frame):
 
 		#Step 2 : Get the explanation for the prediction
 		explainer = lime_image.LimeImageExplainer()
-
 		explanation, segments = explainer.explain_instance_and_get_segments(prediction[1], predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
-
 		temp, _ = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
 		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
@@ -598,7 +622,7 @@ class Window(Frame):
 			top = self.top_picture = Toplevel(bg = "grey")
 			top.title("Editing the Picture")
 
-			top.geometry("300x300")
+			top.geometry("300x330")
 
 			canvas = Canvas(self.top_picture, width = 300, height = 300)
 			canvas.pack(expand = YES, fill = BOTH)
@@ -608,11 +632,38 @@ class Window(Frame):
 
 			canvas.image = img
 
+			finishbutton = Button(top, text = "Finish the Superpixel Choose", command = self.togglefinish)
+			finishbutton.place(x = 0, y = 300)
+			finishbutton.pack(fill = X)
+
 			canvas.create_image(0, 0, image = img, anchor = "nw")
 			canvas.bind("<Button 1>", self.printcoords)
 
 	def printcoords(self, event):
-		print("Superpixel number #" + str(self.segments[event.y, event.x]))
+		#to create the image that responds to the click of the mouse button
+		if not self.sp_finish:
+			takeout_area = self.segments[event.y, event.x]
+			if takeout_area not in self.list_sp_outcast:
+				self.list_sp_outcast.append(takeout_area)
+			print("Superpixel number #" + str(self.segments[event.y, event.x]))
+
+		else:
+			print("already finish choosing the superpixel")	
+
+	def togglefinish(self):
+		self.sp_finish = True
+
+		result_image = np.zeros(np.shape(self.transformed_image))
+		copied_image = self.transformed_image / 2 + 0.5
+
+		print(self.list_sp_outcast)
+		for width in range(len(result_image)):
+			for height in range(len(result_image[0])):
+				if self.segments[width, height] not in self.list_sp_outcast:
+					result_image[width, height] = copied_image[width, height].copy()
+
+		name_file = input("Put the name of the modified file below\n")
+		plt.imsave(fname = name_file + ".jpeg", arr = result_image)
 
 	####################################################################
 	#BEGIN Button 7 : Showing the operation for switching and quitting
