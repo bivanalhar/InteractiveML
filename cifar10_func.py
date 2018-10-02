@@ -83,3 +83,5 @@ def build_dictionary_for_cifar10_image():
 		label_dict[i] = names[i]
 
 	return label_dict
+
+# preprocess_and_save_data("./cifar-10")

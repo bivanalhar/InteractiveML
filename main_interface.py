@@ -35,6 +35,7 @@ from datasets import imagenet
 names = imagenet.create_readable_names_for_imagenet_labels()
 # names = cf.build_dictionary_for_cifar10_image()
 
+# processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
 processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
 
 # logits, _, _, _ = model.conv_cifar10(processed_images)
@@ -69,7 +70,6 @@ This is the borderline between the LIME Image Explainer
 and the interface we are about to build on for this application
 Later on, we are aiming to integrate the explainer above with
 the interface that we have in the bottom of this comment.
-
 """
 
 #the main interface will provide the main screen
@@ -131,9 +131,6 @@ class Window(Frame):
 		self.stat_bool = True
 		self.text_bool = True
 		self.explain_bool = True
-
-		self.sp_finish = False
-		self.list_sp_outcast = []
 		self.segments = None
 
 		self.is_doctor = 0
@@ -175,7 +172,7 @@ class Window(Frame):
 		top = self.top = Toplevel(bg = "white")
 		top.title("List of Patients")
 
-		top.geometry("300x500")
+		top.geometry("300x520")
 
 		button_1 = Button(top, text = "Patient #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
 		button_1.pack(fill = X)
@@ -224,6 +221,9 @@ class Window(Frame):
 		top.title("Complex Explanation Interface")
 
 		top.geometry("950x725")
+
+		self.sp_finish = False
+		self.list_sp_outcast = []
 
 		# 1.1) Displaying the Label Image of the Patient
 		frame_info = Frame(top, height = 30, width = 200)
@@ -414,7 +414,7 @@ class Window(Frame):
 		layout = go.Layout(title = "Stats for Best Prediction", width = 800, height = 640)
 		fig = go.Figure(data = data, layout = layout)
 
-		py.image.save_as(fig, filename = str(id_) + "_statchart.jpeg")
+		py.image.save_as(fig, filename = str(id_) + "_statchart.jpg")
 
 		#Step 2 : Show or hide the bar chart (shows the highest 5 prediction accuracy)
 		if self.stat_bool:
@@ -423,7 +423,7 @@ class Window(Frame):
 			self.hideBarChart()
 
 	def showBarChart(self, id_ = None):
-		bar_info = Image.open(str(id_) + "_statchart.jpeg")
+		bar_info = Image.open(str(id_) + "_statchart.jpg")
 		bar_info = bar_info.resize((300, 320), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(bar_info)
 
@@ -511,11 +511,11 @@ class Window(Frame):
 			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
 			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 50, hide_rest = False)
 			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
-			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
+			plt.imsave(fname = "explain_complex.jpg", arr = img_save)
 
 			self.id_current = id_
 
-			explain_info = Image.open("explain_complex.jpeg")
+			explain_info = Image.open("explain_complex.jpg")
 			explain_info = explain_info.resize((240, 240), Image.ANTIALIAS)
 			render = ImageTk.PhotoImage(explain_info)
 
@@ -595,12 +595,12 @@ class Window(Frame):
 		temp, _ = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
 		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
-		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments)
+		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (0,0,0))
 
-		plt.imsave(fname = "explain_simple.jpeg", arr = img_save)
+		plt.imsave(fname = "explain_simple.jpg", arr = img_save)
 
 		if self.simplexplain_bool:
-			explain_info = Image.open("explain_simple.jpeg")
+			explain_info = Image.open("explain_simple.jpg")
 			explain_info = explain_info.resize((250, 250), Image.ANTIALIAS)
 			render = ImageTk.PhotoImage(explain_info)
 
@@ -627,7 +627,7 @@ class Window(Frame):
 			canvas = Canvas(self.top_picture, width = 300, height = 300)
 			canvas.pack(expand = YES, fill = BOTH)
 
-			open_file = Image.open("explain_complex.jpeg")
+			open_file = Image.open("explain_complex.jpg")
 			img = ImageTk.PhotoImage(open_file)
 
 			canvas.image = img
@@ -663,7 +663,7 @@ class Window(Frame):
 					result_image[width, height] = copied_image[width, height].copy()
 
 		name_file = input("Put the name of the modified file below\n")
-		plt.imsave(fname = name_file + ".jpeg", arr = result_image)
+		plt.imsave(fname = name_file + ".jpg", arr = result_image)
 
 	####################################################################
 	#BEGIN Button 7 : Showing the operation for switching and quitting
