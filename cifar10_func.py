@@ -15,7 +15,13 @@ def load_cifar10_batch(folder_path, batch_id):
 def load_label_names():
 	return ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-#3) function to do one-hot encoding towards the label input
+#3-1) function to do normalization towards the data input
+def normalize(x):
+	min_val, max_val = np.min(x), np.max(x)
+	x = 2 * ((x - min_val)/(max_val - min_val)) - 1
+	return x
+
+#3-2) function to do one-hot encoding towards the label input
 def one_hot_encode(x):
 	encoded = np.zeros((len(x), 10))
 	for idx, val in enumerate(x):
@@ -24,6 +30,7 @@ def one_hot_encode(x):
 
 #4) function to preprocess the CIFAR-10 dataset and then to put it all back
 def preprocess_and_save(features, labels, filename):
+	features = normalize(features)
 	labels = one_hot_encode(labels)
 	pickle.dump((features, labels), open(filename, 'wb'))
 
