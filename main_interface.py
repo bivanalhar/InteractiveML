@@ -2,6 +2,7 @@ import pickle
 import plotly.plotly as py
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
+import lime
 from lime import lime_image
 import tensorflow as tf
 import numpy as np
@@ -180,10 +181,10 @@ class Window(Frame):
 		self.pack(fill = BOTH, expand = 1)
 
 		#the initial window just contains the doctor and patient button
-		doctorbutton = Button(self, text = "Doctor", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 0), bg = "lightblue", height = 2)
+		doctorbutton = Button(self, text = "Expert", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 0), bg = "lightblue", height = 2)
 		doctorbutton.pack(fill = X)
 
-		patientbutton = Button(self, text = "Patient", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 1), bg = "orange", height = 2)
+		patientbutton = Button(self, text = "Owner", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 1), bg = "orange", height = 2)
 		patientbutton.pack(fill = X)
 
 		exitbutton = Button(self, text = "Exit", font = ('Helvetica', '12'), command = self.client_exit)
@@ -191,42 +192,42 @@ class Window(Frame):
 
 	def listPatient(self, pd_info = None):
 		if pd_info == None:
-			print("Identity not Confirmed : Patient or Doctor?")
+			print("Identity not Confirmed : Expert or Owner?")
 			return
 
 		top = self.top = Toplevel(bg = "white")
-		top.title("List of Patients")
+		top.title("List of Owner")
 
 		top.geometry("300x830")
 
-		button_1 = Button(top, text = "Patient #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
+		button_1 = Button(top, text = "Owner #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
 		button_1.pack(fill = X)
 
-		button_2 = Button(top, text = "Patient #2\nBivan Alzacky", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 1), bg = "turquoise", height = 3)
+		button_2 = Button(top, text = "Owner #2\nBivan Alzacky", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 1), bg = "turquoise", height = 3)
 		button_2.pack(fill = X)
 
-		button_3 = Button(top, text = "Patient #3\nChoi Seungmin", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 2), bg = "salmon", height = 3)
+		button_3 = Button(top, text = "Owner #3\nChoi Seungmin", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 2), bg = "salmon", height = 3)
 		button_3.pack(fill = X)
 
-		button_4 = Button(top, text = "Patient #4\nAlberta Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 3), bg = "turquoise", height = 3)
+		button_4 = Button(top, text = "Owner #4\nAlberta Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 3), bg = "turquoise", height = 3)
 		button_4.pack(fill = X)
 
-		button_5 = Button(top, text = "Patient #5\nAlisa Kurt", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 4), bg = "salmon", height = 3)
+		button_5 = Button(top, text = "Owner #5\nAlisa Kurt", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 4), bg = "salmon", height = 3)
 		button_5.pack(fill = X)
 
-		button_6 = Button(top, text = "Patient #6\nKim Eunhye", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 5), bg = "turquoise", height = 3)
+		button_6 = Button(top, text = "Owner #6\nKim Eunhye", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 5), bg = "turquoise", height = 3)
 		button_6.pack(fill = X)
 
-		button_7 = Button(top, text = "Patient #7\nTakeshi Gouda", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 6), bg = "salmon", height = 3)
+		button_7 = Button(top, text = "Owner #7\nTakeshi Gouda", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 6), bg = "salmon", height = 3)
 		button_7.pack(fill = X)
 
-		button_8 = Button(top, text = "Patient #8\nMira Strauss", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 7), bg = "turquoise", height = 3)
+		button_8 = Button(top, text = "Owner #8\nMira Strauss", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 7), bg = "turquoise", height = 3)
 		button_8.pack(fill = X)
 
-		button_9 = Button(top, text = "Patient #9\nShane Oh", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 8), bg = "salmon", height = 3)
+		button_9 = Button(top, text = "Owner #9\nShane Oh", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 8), bg = "salmon", height = 3)
 		button_9.pack(fill = X)
 
-		button_10 = Button(top, text = "Patient #10\nHarold Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 9), bg = "turquoise", height = 3)
+		button_10 = Button(top, text = "Owner #10\nHarold Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 9), bg = "turquoise", height = 3)
 		button_10.pack(fill = X)
 
 		quitbutton = Button(top, text = "Quit", command = self.quitPatient, bg = "red")
@@ -238,7 +239,7 @@ class Window(Frame):
 	def checkScreen(self, pd_info, identity):
 		if pd_info == 0:
 			probability = self.init_complex[0] / float(self.init_complex[0] + self.init_complex[1])
-			print("Doctor : probability of showing complex is {0:.2f}".format(probability))
+			print("Expert : probability of showing complex is {0:.2f}".format(probability))
 
 			if probability > 0.5:
 				self.showComplex(id_ = identity)
@@ -246,7 +247,7 @@ class Window(Frame):
 				self.showSimple(id_ = identity)
 		else:
 			probability = self.init_simple[1] / float(self.init_simple[0] + self.init_simple[1])
-			print("Patient : probability of showing simple is {0:.2f}".format(probability))
+			print("Owner : probability of showing simple is {0:.2f}".format(probability))
 
 			if probability > 0.5:
 				self.showSimple(id_ = identity)
@@ -269,7 +270,7 @@ class Window(Frame):
 
 		text_info = Text(frame_info, height = 20, width = 30, font = ("Helvetica", 14), bg = "aquamarine")
 		text_info.tag_configure("center", justify = "center")
-		text_info.insert("1.0", "Patient Photo")
+		text_info.insert("1.0", "Owner Photo")
 		text_info.tag_add("center", '1.0', 'end')
 		text_info.config(state = DISABLED)
 		text_info.pack()
@@ -289,7 +290,7 @@ class Window(Frame):
 		frame_bio.place(x=200, y=0)
 
 		text_bio = Text(frame_bio, height = 20, width = 100, font = ("Helvetica", 16), bg = "gold")
-		text_bio_t = " Patient Biodata Information\n"
+		text_bio_t = " Owner Biodata Information\n"
 		text_bio_t += " Name\t\t: " + str(patient_info[0][id_]) + "\n"
 		text_bio_t += " Sex\t\t: " + str(patient_info[1][id_]) + "\n"
 		text_bio_t += " Age\t\t: " + str(patient_info[2][id_]) + "\n"
@@ -308,7 +309,7 @@ class Window(Frame):
 
 		med_info = Text(frame_info_2, height = 20, width = 30, font = ("Helvetica", 14), bg = "aquamarine")
 		med_info.tag_configure("center", justify = "center")
-		med_info.insert("1.0", "Medical Photo")
+		med_info.insert("1.0", "Object Photo")
 		med_info.tag_add("center", '1.0', 'end')
 		med_info.config(state = DISABLED)
 		med_info.pack()
@@ -352,7 +353,7 @@ class Window(Frame):
 
 		text_info = Text(frame_info, height = 20, width = 30, font = ("Arial", 10), bg = "aquamarine")
 		text_info.tag_configure("center", justify = "center")
-		text_info.insert("1.0", "Patient Photo")
+		text_info.insert("1.0", "Owner Photo")
 		text_info.tag_add("center", '1.0', 'end')
 		text_info.config(state = DISABLED)
 		text_info.pack()
@@ -372,7 +373,7 @@ class Window(Frame):
 		frame_bio.place(x = 150, y = 0)
 
 		text_bio = Text(frame_bio, height = 20, width = 100, font = ("Helvetica", 11), bg = "gold")
-		text_bio_t = " Patient Biodata Information\n"
+		text_bio_t = " Owner Biodata Information\n"
 		text_bio_t += " Name\t\t: " + str(patient_info[0][id_]) + "\n"
 		text_bio_t += " Sex\t\t: " + str(patient_info[1][id_]) + "\n"
 		text_bio_t += " Age\t\t: " + str(patient_info[2][id_]) + "\n"
@@ -440,7 +441,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		data = [go.Bar(
 					x = name_list,
@@ -482,7 +483,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		#Step 2 : Show or hide the text for showing prediction
 		if self.text_bool:
@@ -548,8 +549,8 @@ class Window(Frame):
 			# print(np.max(image), np.min(image))
 
 			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
-			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 30, hide_rest = False)
-			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
+			temp, _ = explanation.get_image_and_mask(id_, positive_only = True, num_features = 30, hide_rest = True)
+			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (1,1,1))
 			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
 			self.id_current = id_
@@ -581,7 +582,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		#Step 2 : Show or hide the text for showing prediction
 		if self.simpletext_bool:
@@ -634,7 +635,7 @@ class Window(Frame):
 		temp, _ = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
 		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
-		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (0,0,0))
+		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (1,0,1))
 
 		plt.imsave(fname = "explain_simple.jpeg", arr = img_save)
 
@@ -663,10 +664,11 @@ class Window(Frame):
 
 			top.geometry("300x330")
 
-			canvas = Canvas(self.top_picture, width = 300, height = 300)
+			canvas = Canvas(self.top_picture, width = 200, height = 200)
 			canvas.pack(expand = YES, fill = BOTH)
 
 			open_file = Image.open("explain_complex.jpeg")
+			open_file = open_file.resize((200, 200), Image.ANTIALIAS)
 			img = ImageTk.PhotoImage(open_file)
 
 			canvas.image = img
@@ -681,11 +683,15 @@ class Window(Frame):
 	def printcoords(self, event):
 		#to create the image that responds to the click of the mouse button
 		if not self.sp_finish:
-			takeout_area = self.segments[event.y, event.x]
+			y_axis = int(event.y * 32 / 200)
+			x_axis = int(event.x * 32 / 200)
+			takeout_area = self.segments[y_axis, x_axis]
 			if takeout_area not in self.list_sp_outcast:
 				self.list_sp_outcast.append(takeout_area)
-			print("Superpixel number #" + str(self.segments[event.y, event.x]))
-
+				print("choosing Superpixel number #" + str(self.segments[y_axis, x_axis]))
+			else:
+				self.list_sp_outcast.remove(takeout_area)
+				print("removing Superpixel number #" + str(self.segments[y_axis, x_axis]))
 		else:
 			print("already finish choosing the superpixel")	
 

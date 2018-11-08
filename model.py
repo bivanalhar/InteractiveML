@@ -6,12 +6,24 @@ import tensorflow as tf
 with open("matrix_mul.pickle", "rb") as file:
 	matrices_1 = pickle.load(file)
 
+#all trained with the ration of [1/2..1]
+matrices_0 = [[1 for j in range(5)] for i in range(5)]
 matrices_2 = [[0.65, 0.6, 0.75, 0.65, 0.65],[0.8, 0.85, 0.8, 0.8, 0.75],[1, 1, 0.85, 0.9, 0.85],[1, 1, 0.95, 1, 0.95],[1, 1, 1, 1, 1]]
+matrices_3 = [[0.65, 0.65, 0.65, 0.65, 0.8],[0.75, 0.7, 0.65, 0.7, 0.85],[0.85, 0.8, 0.8, 0.85, 0.9],[0.9, 1, 0.95, 0.95, 0.95],[0.95, 1, 1, 0.95, 1]]
+matrices_4c = [[0.9, 0.9, 0.9, 0.9, 0.9],[0.9, 0.9, 0.85, 0.9, 0.9],[0.8, 0.7, 0.7, 0.7, 0.75],[0.75, 0.7, 0.7, 0.7, 0.8],[0.7, 0.7, 0.65, 0.65, 0.8]]
+matrices_5c = [[0.7, 0.6, 0.6, 0.6, 0.75],[0.6, 0.6, 0.55, 0.55, 0.7],[0.6, 0.55, 0.65, 0.6, 0.65],[0.6, 0.65, 0.75, 0.7, 0.7],[0.75, 0.75, 0.75, 0.8, 0.75]]
+
+matrices_6c = np.multiply(matrices_4c, 1.5) - np.multiply(matrices_0, 0.5)
+matrices_7c = np.multiply(matrices_5c, 1.5) - np.multiply(matrices_0, 0.5)
+
+matrices_8c = np.multiply(matrices_4c, 1.75) - np.multiply(matrices_0, 0.75)
+matrices_9c = np.multiply(matrices_5c, 1.75) - np.multiply(matrices_0, 0.75)
+# print(matrices_6c)
 
 # print(matrices_1)
 # matrices = [[[1 for k in range(256)] for j in range(5)] for i in range(5)]
-# matrices = [[[matrices_1[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
-matrices = [[[matrices_2[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
+matrices = [[[matrices_1[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
+# matrices = [[[matrices_2[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
 
 #define the model to be used
 def conv_cifar10(input_image):
@@ -63,6 +75,6 @@ def conv_cifar10(input_image):
 	fc2 = tf.layers.dense(inputs = fc1, units = 2 * 512, activation = tf.nn.relu)
 	fc3 = tf.layers.dense(inputs = fc2, units = 128, activation = tf.nn.relu)
 	fc_final = tf.layers.dense(inputs = fc3, units = 10)
-	fc_final = tf.Print(fc_final, [tf.nn.softmax(fc_final)], "After softmax : ", summarize = 10)
+	# fc_final = tf.Print(fc_final, [tf.multiply(100.0, tf.nn.softmax(fc_final))], "After softmax : ", summarize = 10)
 
 	return fc_final, weight_1, weight_2, weight_3, weight_4, weight_5
