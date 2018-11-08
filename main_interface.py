@@ -2,6 +2,7 @@ import pickle
 import plotly.plotly as py
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
+import lime
 from lime import lime_image
 import tensorflow as tf
 import numpy as np
@@ -19,45 +20,53 @@ from nets import inception
 from preprocessing import inception_preprocessing
 
 session = tf.Session()
-# image_size = 32 #the size of the CIFAR-10 images shall be 32x32, so all input should be converted into this size
-image_size = 299
+image_size = 32 #the size of the CIFAR-10 images shall be 32x32, so all input should be converted into this size
+# image_size = 299
 
 def transform_img_fn(path_list):
 	out = []
 	for f in path_list:
 		file = open(f, 'rb')
 		image_raw = tf.image.decode_jpeg(file.read(), channels=3)
+		# image = tf.image.resize_images(image_raw, [image_size, image_size])
+		# print(session.run(tf.reduce_max(image)), session.run(tf.reduce_min(image)))
+		# image = tf.subtract(tf.divide(image, 128), 1)
+
 		image = inception_preprocessing.preprocess_image(image_raw, image_size, image_size, is_training = False)
+		# image_max, image_min = tf.reduce_max(image), tf.reduce_min(image)
+		# print(session.run(image_max), session.run(image_min))
+
 		out.append(image)
 	return session.run([out])[0]
 
-from datasets import imagenet
-names = imagenet.create_readable_names_for_imagenet_labels()
-# names = cf.build_dictionary_for_cifar10_image()
+# from datasets import imagenet
+# names = imagenet.create_readable_names_for_imagenet_labels()
+names = cf.build_dictionary_for_cifar10_image()
 
-# processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
-processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
+processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
+# processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
 
-# logits, _, _, _ = model.conv_cifar10(processed_images)
-# probabilities = tf.nn.softmax(logits)
-
-# saver = tf.train.Saver()
-
-# checkpoints_dir = "./pretrained/cifar10_model.ckpt"
-# saver.restore(session, "./pretrained/cifar10_model.ckpt")
-
-import os
-with slim.arg_scope(inception.inception_v3_arg_scope()):
-    logits, _ = inception.inception_v3(processed_images, num_classes=1001, is_training=False)
+logits, _, _, _, _, _ = model.conv_cifar10(processed_images)
 probabilities = tf.nn.softmax(logits)
 
-checkpoints_dir = '/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim/pretrained'
-init_fn = slim.assign_from_checkpoint_fn(
-    os.path.join(checkpoints_dir, 'inception_v3.ckpt'),
-    slim.get_model_variables('InceptionV3'))
-init_fn(session)
+saver = tf.train.Saver()
+
+checkpoints_dir = "./pretrained/cifar10_model.ckpt"
+saver.restore(session, "./pretrained/cifar10_model.ckpt")
+
+# import os
+# with slim.arg_scope(inception.inception_v3_arg_scope()):
+#     logits, _ = inception.inception_v3(processed_images, num_classes=1001, is_training=False)
+# probabilities = tf.nn.softmax(logits)
+
+# checkpoints_dir = '/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim/pretrained'
+# init_fn = slim.assign_from_checkpoint_fn(
+#     os.path.join(checkpoints_dir, 'inception_v3.ckpt'),
+#     slim.get_model_variables('InceptionV3'))
+# init_fn(session)
 
 def predict_fn(images):
+	# print(session.run(shape, feed_dict = {processed_images : images}))
 	return session.run(probabilities, feed_dict={processed_images: images})
 
 from skimage.segmentation import mark_boundaries
@@ -72,11 +81,23 @@ Later on, we are aiming to integrate the explainer above with
 the interface that we have in the bottom of this comment.
 """
 
+#as we will provide the interface for the feedback model
+#we will provide the platform in the form of image counting
+#and also the matrix that best depicts those feedbacks
+with open("count_img.pickle", "rb") as file:
+	count_img = pickle.load(file)
+
+with open("matrix_img.pickle", "rb") as file:
+	matrix_img = pickle.load(file)
+
+with open("matrix_mul.pickle", "rb") as file:
+	matrix_mul = pickle.load(file)
+
 #the main interface will provide the main screen
 #of the program in general. this will just contain the
 #2 buttons, one for the doctor and one for the patient
 with open("save_tuple.pickle", "rb") as file:
-	doc, pat= pickle.load(file)
+	doc, pat = pickle.load(file)
 
 print("the current probability of doctor seeing complex is {0:.2f}".format(float(doc[0])/(doc[0] + doc[1])))
 print("the current probability of patient seeing simple is {0:.2f}\n".format(float(pat[1])/(pat[0] + pat[1])))
@@ -99,12 +120,12 @@ if init == '0' or init == '':
 	print("proceeding")
 
 patient_info = [[], [], [], [], [], []]
-patient_info[0] += ["Andy Williams", "Bivan Harmanto", "Choi Seungmin", "Alberta Scrubb", "Alisa Kurt", "Kim Eunhye"]
-patient_info[1] += ["Male", "Male", "Male", "Female", "Female", "Female"]
-patient_info[2] += [35, 22, 27, 50, 19, 21]
-patient_info[3] += ["AB Positive", "O Positive", "B Negative", "A Positive", "B Positive", "O Negative"]
-patient_info[4] += ["Professor", "Software Engineer", "Counsellor", "Housewife", "Chief Operating Officer", "Student"]
-patient_info[5] += ["American", "Indonesian", "Korean", "British", "Germanese", "Korean"]
+patient_info[0] += ["Andy Williams", "Bivan Harmanto", "Choi Seungmin", "Alberta Scrubb", "Alisa Kurt", "Kim Eunhye", "Takeshi Gouda", "Mira Strauss", "Shane Oh", "Harold Scrubb"]
+patient_info[1] += ["Male", "Male", "Male", "Female", "Female", "Female", "Male", "Female", "Female", "Male"]
+patient_info[2] += [35, 22, 27, 50, 19, 21, 39, 27, 25, 53]
+patient_info[3] += ["AB Positive", "O Positive", "B Negative", "A Positive", "B Positive", "O Negative", "O Positive", "B Negative", "A Positive", "B Positive"]
+patient_info[4] += ["Professor", "Software Engineer", "Counsellor", "Housewife", "Chief Operating Officer", "Student", "Warrior", "Chief Technical Officer", "Student", "Veteran"]
+patient_info[5] += ["American", "Indonesian", "Korean", "British", "Germanese", "Korean", "Japanese", "Germanese", "Korean", "British"]
 
 class Window(Frame):
 
@@ -119,6 +140,11 @@ class Window(Frame):
 		#for the prior probability of the interface outcome
 		self.init_complex = doc
 		self.init_simple = pat
+
+		#providing the platform for the interactivity
+		self.count_img = count_img
+		self.matrix_img = matrix_img
+		self.matrix_mul = matrix_mul
 
 		self.init_window()
 
@@ -155,10 +181,10 @@ class Window(Frame):
 		self.pack(fill = BOTH, expand = 1)
 
 		#the initial window just contains the doctor and patient button
-		doctorbutton = Button(self, text = "Doctor", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 0), bg = "lightblue", height = 2)
+		doctorbutton = Button(self, text = "Expert", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 0), bg = "lightblue", height = 2)
 		doctorbutton.pack(fill = X)
 
-		patientbutton = Button(self, text = "Patient", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 1), bg = "orange", height = 2)
+		patientbutton = Button(self, text = "Owner", font = ('Helvetica', '16'), command = lambda: self.listPatient(pd_info = 1), bg = "orange", height = 2)
 		patientbutton.pack(fill = X)
 
 		exitbutton = Button(self, text = "Exit", font = ('Helvetica', '12'), command = self.client_exit)
@@ -166,31 +192,43 @@ class Window(Frame):
 
 	def listPatient(self, pd_info = None):
 		if pd_info == None:
-			print("Identity not Confirmed : Patient or Doctor?")
+			print("Identity not Confirmed : Expert or Owner?")
 			return
 
 		top = self.top = Toplevel(bg = "white")
-		top.title("List of Patients")
+		top.title("List of Owner")
 
-		top.geometry("300x520")
+		top.geometry("300x830")
 
-		button_1 = Button(top, text = "Patient #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
+		button_1 = Button(top, text = "Owner #1\nAndy Williams", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 0), bg = "salmon", height = 3)
 		button_1.pack(fill = X)
 
-		button_2 = Button(top, text = "Patient #2\nBivan Alzacky", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 1), bg = "turquoise", height = 3)
+		button_2 = Button(top, text = "Owner #2\nBivan Alzacky", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 1), bg = "turquoise", height = 3)
 		button_2.pack(fill = X)
 
-		button_3 = Button(top, text = "Patient #3\nChoi Seungmin", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 2), bg = "salmon", height = 3)
+		button_3 = Button(top, text = "Owner #3\nChoi Seungmin", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 2), bg = "salmon", height = 3)
 		button_3.pack(fill = X)
 
-		button_4 = Button(top, text = "Patient #4\nAlberta Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 3), bg = "turquoise", height = 3)
+		button_4 = Button(top, text = "Owner #4\nAlberta Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 3), bg = "turquoise", height = 3)
 		button_4.pack(fill = X)
 
-		button_5 = Button(top, text = "Patient #5\nAlisa Kurt", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 4), bg = "salmon", height = 3)
+		button_5 = Button(top, text = "Owner #5\nAlisa Kurt", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 4), bg = "salmon", height = 3)
 		button_5.pack(fill = X)
 
-		button_6 = Button(top, text = "Patient #6\nKim Eunhye", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 5), bg = "turquoise", height = 3)
+		button_6 = Button(top, text = "Owner #6\nKim Eunhye", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 5), bg = "turquoise", height = 3)
 		button_6.pack(fill = X)
+
+		button_7 = Button(top, text = "Owner #7\nTakeshi Gouda", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 6), bg = "salmon", height = 3)
+		button_7.pack(fill = X)
+
+		button_8 = Button(top, text = "Owner #8\nMira Strauss", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 7), bg = "turquoise", height = 3)
+		button_8.pack(fill = X)
+
+		button_9 = Button(top, text = "Owner #9\nShane Oh", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 8), bg = "salmon", height = 3)
+		button_9.pack(fill = X)
+
+		button_10 = Button(top, text = "Owner #10\nHarold Scrubb", font = ('Helvetica', '11'), command = lambda: self.checkScreen(pd_info = pd_info, identity = 9), bg = "turquoise", height = 3)
+		button_10.pack(fill = X)
 
 		quitbutton = Button(top, text = "Quit", command = self.quitPatient, bg = "red")
 		quitbutton.pack(fill = X)
@@ -201,7 +239,7 @@ class Window(Frame):
 	def checkScreen(self, pd_info, identity):
 		if pd_info == 0:
 			probability = self.init_complex[0] / float(self.init_complex[0] + self.init_complex[1])
-			print("Doctor : probability of showing complex is {0:.2f}".format(probability))
+			print("Expert : probability of showing complex is {0:.2f}".format(probability))
 
 			if probability > 0.5:
 				self.showComplex(id_ = identity)
@@ -209,7 +247,7 @@ class Window(Frame):
 				self.showSimple(id_ = identity)
 		else:
 			probability = self.init_simple[1] / float(self.init_simple[0] + self.init_simple[1])
-			print("Patient : probability of showing simple is {0:.2f}".format(probability))
+			print("Owner : probability of showing simple is {0:.2f}".format(probability))
 
 			if probability > 0.5:
 				self.showSimple(id_ = identity)
@@ -232,13 +270,13 @@ class Window(Frame):
 
 		text_info = Text(frame_info, height = 20, width = 30, font = ("Helvetica", 14), bg = "aquamarine")
 		text_info.tag_configure("center", justify = "center")
-		text_info.insert("1.0", "Patient Photo")
+		text_info.insert("1.0", "Owner Photo")
 		text_info.tag_add("center", '1.0', 'end')
 		text_info.config(state = DISABLED)
 		text_info.pack()
 
 		# 1.2) Displaying the Image of the Patient
-		avatar = Image.open(str(id_) + "_patinfo.jpg")
+		avatar = Image.open(str(id_) + "_patinfo.jpeg")
 		avatar = avatar.resize((197,197), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(avatar)
 
@@ -252,7 +290,7 @@ class Window(Frame):
 		frame_bio.place(x=200, y=0)
 
 		text_bio = Text(frame_bio, height = 20, width = 100, font = ("Helvetica", 16), bg = "gold")
-		text_bio_t = " Patient Biodata Information\n"
+		text_bio_t = " Owner Biodata Information\n"
 		text_bio_t += " Name\t\t: " + str(patient_info[0][id_]) + "\n"
 		text_bio_t += " Sex\t\t: " + str(patient_info[1][id_]) + "\n"
 		text_bio_t += " Age\t\t: " + str(patient_info[2][id_]) + "\n"
@@ -271,12 +309,12 @@ class Window(Frame):
 
 		med_info = Text(frame_info_2, height = 20, width = 30, font = ("Helvetica", 14), bg = "aquamarine")
 		med_info.tag_configure("center", justify = "center")
-		med_info.insert("1.0", "Medical Photo")
+		med_info.insert("1.0", "Object Photo")
 		med_info.tag_add("center", '1.0', 'end')
 		med_info.config(state = DISABLED)
 		med_info.pack()
 
-		avatar = Image.open(str(id_) + "_medinfo.jpg")
+		avatar = Image.open(str(id_) + "_medinfo.jpeg")
 		avatar = avatar.resize((197,197), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(avatar)
 
@@ -315,13 +353,13 @@ class Window(Frame):
 
 		text_info = Text(frame_info, height = 20, width = 30, font = ("Arial", 10), bg = "aquamarine")
 		text_info.tag_configure("center", justify = "center")
-		text_info.insert("1.0", "Patient Photo")
+		text_info.insert("1.0", "Owner Photo")
 		text_info.tag_add("center", '1.0', 'end')
 		text_info.config(state = DISABLED)
 		text_info.pack()
 
 		# 1.2) Displaying the Image of the Patient
-		avatar = Image.open(str(id_) + "_patinfo.jpg")
+		avatar = Image.open(str(id_) + "_patinfo.jpeg")
 		avatar = avatar.resize((147,147), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(avatar)
 
@@ -335,7 +373,7 @@ class Window(Frame):
 		frame_bio.place(x = 150, y = 0)
 
 		text_bio = Text(frame_bio, height = 20, width = 100, font = ("Helvetica", 11), bg = "gold")
-		text_bio_t = " Patient Biodata Information\n"
+		text_bio_t = " Owner Biodata Information\n"
 		text_bio_t += " Name\t\t: " + str(patient_info[0][id_]) + "\n"
 		text_bio_t += " Sex\t\t: " + str(patient_info[1][id_]) + "\n"
 		text_bio_t += " Age\t\t: " + str(patient_info[2][id_]) + "\n"
@@ -359,7 +397,7 @@ class Window(Frame):
 		med_info.config(state = DISABLED)
 		med_info.pack()
 
-		avatar = Image.open(str(id_) + "_medinfo.jpg")
+		avatar = Image.open(str(id_) + "_medinfo.jpeg")
 		avatar = avatar.resize((147,147), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(avatar)
 
@@ -385,7 +423,7 @@ class Window(Frame):
 
 	def CalcProbImage(self, id_ = None):
 		#do the calculation for the prediction towards the image, using pretrained model
-		path_name = str(id_) + '_medinfo.jpg'
+		path_name = str(id_) + '_medinfo.jpeg'
 		images = transform_img_fn([path_name])
 		self.transformed_image = images[0]
 
@@ -403,7 +441,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		data = [go.Bar(
 					x = name_list,
@@ -414,7 +452,7 @@ class Window(Frame):
 		layout = go.Layout(title = "Stats for Best Prediction", width = 800, height = 640)
 		fig = go.Figure(data = data, layout = layout)
 
-		py.image.save_as(fig, filename = str(id_) + "_statchart.jpg")
+		py.image.save_as(fig, filename = str(id_) + "_statchart.jpeg")
 
 		#Step 2 : Show or hide the bar chart (shows the highest 5 prediction accuracy)
 		if self.stat_bool:
@@ -423,7 +461,7 @@ class Window(Frame):
 			self.hideBarChart()
 
 	def showBarChart(self, id_ = None):
-		bar_info = Image.open(str(id_) + "_statchart.jpg")
+		bar_info = Image.open(str(id_) + "_statchart.jpeg")
 		bar_info = bar_info.resize((300, 320), Image.ANTIALIAS)
 		render = ImageTk.PhotoImage(bar_info)
 
@@ -445,7 +483,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		#Step 2 : Show or hide the text for showing prediction
 		if self.text_bool:
@@ -508,14 +546,16 @@ class Window(Frame):
 			self.title_pict.config(state = DISABLED)
 			self.title_pict.pack()
 
+			# print(np.max(image), np.min(image))
+
 			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
-			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 50, hide_rest = False)
-			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
-			plt.imsave(fname = "explain_complex.jpg", arr = img_save)
+			temp, _ = explanation.get_image_and_mask(id_, positive_only = True, num_features = 30, hide_rest = True)
+			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (1,1,1))
+			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
 			self.id_current = id_
 
-			explain_info = Image.open("explain_complex.jpg")
+			explain_info = Image.open("explain_complex.jpeg")
 			explain_info = explain_info.resize((240, 240), Image.ANTIALIAS)
 			render = ImageTk.PhotoImage(explain_info)
 
@@ -542,7 +582,7 @@ class Window(Frame):
 
 		for x in prediction.argsort()[0][-5:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
-			acc_list.insert(0, float(prediction[0, x]))
+			acc_list.insert(0, 100 * float(prediction[0, x]))
 
 		#Step 2 : Show or hide the text for showing prediction
 		if self.simpletext_bool:
@@ -595,12 +635,12 @@ class Window(Frame):
 		temp, _ = explanation.get_image_and_mask(id_list[0], positive_only = False, num_features = 100, hide_rest = False)
 
 		# img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = mask)
-		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (0,0,0))
+		img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = segments, color = (1,0,1))
 
-		plt.imsave(fname = "explain_simple.jpg", arr = img_save)
+		plt.imsave(fname = "explain_simple.jpeg", arr = img_save)
 
 		if self.simplexplain_bool:
-			explain_info = Image.open("explain_simple.jpg")
+			explain_info = Image.open("explain_simple.jpeg")
 			explain_info = explain_info.resize((250, 250), Image.ANTIALIAS)
 			render = ImageTk.PhotoImage(explain_info)
 
@@ -624,10 +664,11 @@ class Window(Frame):
 
 			top.geometry("300x330")
 
-			canvas = Canvas(self.top_picture, width = 300, height = 300)
+			canvas = Canvas(self.top_picture, width = 200, height = 200)
 			canvas.pack(expand = YES, fill = BOTH)
 
-			open_file = Image.open("explain_complex.jpg")
+			open_file = Image.open("explain_complex.jpeg")
+			open_file = open_file.resize((200, 200), Image.ANTIALIAS)
 			img = ImageTk.PhotoImage(open_file)
 
 			canvas.image = img
@@ -642,28 +683,57 @@ class Window(Frame):
 	def printcoords(self, event):
 		#to create the image that responds to the click of the mouse button
 		if not self.sp_finish:
-			takeout_area = self.segments[event.y, event.x]
+			y_axis = int(event.y * 32 / 200)
+			x_axis = int(event.x * 32 / 200)
+			takeout_area = self.segments[y_axis, x_axis]
 			if takeout_area not in self.list_sp_outcast:
 				self.list_sp_outcast.append(takeout_area)
-			print("Superpixel number #" + str(self.segments[event.y, event.x]))
-
+				print("choosing Superpixel number #" + str(self.segments[y_axis, x_axis]))
+			else:
+				self.list_sp_outcast.remove(takeout_area)
+				print("removing Superpixel number #" + str(self.segments[y_axis, x_axis]))
 		else:
 			print("already finish choosing the superpixel")	
 
 	def togglefinish(self):
 		self.sp_finish = True
 
-		result_image = np.zeros(np.shape(self.transformed_image))
-		copied_image = self.transformed_image / 2 + 0.5
+		self.count_img += 1
+		result_image = np.zeros(np.shape(np.transpose(self.transformed_image, (2, 0, 1))[0]))
+		# print(np.shape(result_image))
 
 		print(self.list_sp_outcast)
 		for width in range(len(result_image)):
 			for height in range(len(result_image[0])):
-				if self.segments[width, height] not in self.list_sp_outcast:
-					result_image[width, height] = copied_image[width, height].copy()
+				if self.segments[width, height] in self.list_sp_outcast:
+					result_image[width, height] = 1
 
-		name_file = input("Put the name of the modified file below\n")
-		plt.imsave(fname = name_file + ".jpg", arr = result_image)
+		for i in range(5):
+			for j in range(5):
+				truncate_matrix = [[result_image[k][l] for l in range(4*j, 4*j+16)] for k in range(4*i, 4*i+16)]
+				if np.sum(truncate_matrix) >= 128:
+					self.matrix_img[i][j] += 1
+
+		print("image counted for feedback is %d" % (self.count_img))
+		if self.count_img == 10:
+			print("the matrix representing the affected region shall be")
+			print(self.matrix_img)
+			for i in range(5):
+				for j in range(5):
+					self.matrix_mul[i][j] -= (self.matrix_mul[i][j] * self.matrix_img[i][j] / 10)
+					self.matrix_mul[i][j] += (self.matrix_img[i][j] / 20)
+					self.matrix_img[i][j] = 0
+			self.count_img = 0
+			print(self.matrix_mul)
+
+		with open("count_img.pickle", "wb") as file:
+			pickle.dump(self.count_img, file)
+		with open("matrix_img.pickle", "wb") as file:
+			pickle.dump(self.matrix_img, file)
+		with open("matrix_mul.pickle", "wb") as file:
+			pickle.dump(self.matrix_mul, file)
+		# name_file = input("Put the name of the modified file below\n")
+		# plt.imsave(fname = name_file + ".jpeg", arr = result_image)
 
 	####################################################################
 	#BEGIN Button 7 : Showing the operation for switching and quitting
