@@ -549,8 +549,8 @@ class Window(Frame):
 			# print(np.max(image), np.min(image))
 
 			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
-			temp, _ = explanation.get_image_and_mask(id_, positive_only = True, num_features = 30, hide_rest = True)
-			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (1,1,1))
+			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 30, hide_rest = False)
+			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
 			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
 			self.id_current = id_
