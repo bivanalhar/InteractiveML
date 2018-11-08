@@ -17,12 +17,13 @@ flags.DEFINE_integer('training_mode', 0, 'the execution mode, whether it is trai
 # flags.DEFINE_float('learning_rate', 0.0001, 'Rate of learning for the optimizer')
 flags.DEFINE_integer('checkpoint_mode', 0, 'to start training from checkpoint or initialize')
 
-logits, weight_1, weight_2, weight_3 = md.conv_cifar10(input_image)
+logits, weight_1, weight_2, weight_3, weight_4, weight_5 = md.conv_cifar10(input_image)
 #now we reach the end of the model construction, next is the training method
 
 #defining the loss function
 loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels = input_label, logits = logits))
-loss += 0.005 * (tf.nn.l2_loss(weight_1) + tf.nn.l2_loss(weight_2) + tf.nn.l2_loss(weight_3))
+loss += 0.005 * (tf.nn.l2_loss(weight_1) + tf.nn.l2_loss(weight_2) + tf.nn.l2_loss(weight_3) +\
+	tf.nn.l2_loss(weight_4) + tf.nn.l2_loss(weight_5))
 optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(loss)
 
 correct = tf.equal(tf.argmax(input_label, 1), tf.argmax(logits, 1))
@@ -46,7 +47,7 @@ with tf.Session() as sess:
 				sess.run(init_op)
 
 			#NOTE : it will be changed accordingly, since the data for training will be different
-			for epoch in range(150):
+			for epoch in range(200):
 				n_batches = 5
 				loss_batch = [None, None, None, None, None]
 
@@ -64,7 +65,7 @@ with tf.Session() as sess:
 						avg_loss += loss_val / total_batch
 					loss_batch[batch_i - 1] = avg_loss
 
-				if epoch % 10 == 9:
+				if epoch % 5 == 4:
 					print("Epoch " + str(epoch + 1) + " loss = " + str(np.average(loss_batch)))
 
 			print("finished training with learning rate " + str(learning_rate))
@@ -72,12 +73,13 @@ with tf.Session() as sess:
 			save_path = saver.save(sess, "./pretrained/cifar10_model_" + str(1e4 * learning_rate) + ".ckpt")
 			print("saved the model parameter for learning rate " + str(learning_rate))
 
+		print("\n")
 		#2) to validate the already trained model, and then choose one with best validation accuracy
 		acc_max = 0.
 		desired_learning_rate = 0.
 		for learning_rate1 in learning_rate_list:
 			learning_rate = learning_rate1
-			print("\ntry to validate the model parameter with learning rate " + str(learning_rate))
+			print("try to validate the model parameter with learning rate " + str(learning_rate))
 			saver.restore(sess, "./pretrained/cifar10_model_" + str(1e4 * learning_rate) + ".ckpt")
 
 			acc_val = 0.
@@ -91,6 +93,8 @@ with tf.Session() as sess:
 
 				acc_ = sess.run(accuracy, feed_dict = {input_image : batch_features, input_label : batch_labels})
 				acc_val += acc_ / total_batch
+
+			print("the current validation accuracy shall be " + str(acc_val) + "\n")
 
 			if acc_max < acc_val:
 				acc_max = acc_val
