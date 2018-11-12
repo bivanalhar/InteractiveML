@@ -3,43 +3,13 @@ import numpy as np
 import tensorflow as tf
 
 #matrices will soon be changed, considering the input from the pickles
-with open("matrix_mul.pickle", "rb") as file:
-	matrices_1 = pickle.load(file)
+with open("matrix_mul_and_count.p", "rb") as file:
+	matrices_1, dummy = pickle.load(file)
 
-#all trained with the ration of [1/2..1] (for the image changed in the second last convolution layer)
-###################################################################################################################
-matrices_0 = [[1 for j in range(5)] for i in range(5)]
-matrices_0c = [[1.0, 1.0, 0.5, 0.5, 0.5], [1.0, 0.5, 0.5, 0.5, 0.5], [1.0, 0.5, 0.5, 0.5, 0.5], [1.0, 0.5, 0.5, 0.5, 0.5], [1.0, 1.0, 1.0, 1.0, 1.0]]
-# matrices_2 = [[0.65, 0.6, 0.75, 0.65, 0.65],[0.8, 0.85, 0.8, 0.8, 0.75],[1, 1, 0.85, 0.9, 0.85],[1, 1, 0.95, 1, 0.95],[1, 1, 1, 1, 1]]
-# matrices_3 = [[0.65, 0.65, 0.65, 0.65, 0.8],[0.75, 0.7, 0.65, 0.7, 0.85],[0.85, 0.8, 0.8, 0.85, 0.9],[0.9, 1, 0.95, 0.95, 0.95],[0.95, 1, 1, 0.95, 1]]
-# matrices_4c = [[0.9, 0.9, 0.9, 0.9, 0.9],[0.9, 0.9, 0.85, 0.9, 0.9],[0.8, 0.7, 0.7, 0.7, 0.75],[0.75, 0.7, 0.7, 0.7, 0.8],[0.7, 0.7, 0.65, 0.65, 0.8]]
-# matrices_5c = [[0.7, 0.6, 0.6, 0.6, 0.75],[0.6, 0.6, 0.55, 0.55, 0.7],[0.6, 0.55, 0.65, 0.6, 0.65],[0.6, 0.65, 0.75, 0.7, 0.7],[0.75, 0.75, 0.75, 0.8, 0.75]]
-# matrices_sim1 = [[1.0, 0.5, 0.5, 1.0, 1.0], [0.0, 0.5, 0.5, 1.0, 1.0], [0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5], [1.0, 0.5, 0.5, -1.0, -1.0]]
+matrices_0 = [[1.0 for j in range(5)] for i in range(5)]
+# matrices_0c = [[1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0]]
 
-# matrices_sim2 = [[0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.0], 
-# 				[-1.0, -1.0, -1.0, 0.1, 0.2, 0.4, 0.5, 0.7, 0.9, 1.0], 
-# 				[-1.0, -1.0, -1.0, 0.0, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0], 
-# 				[-1.0, -1.0, -1.0, 0.0, 0.2, 0.3, 0.5, 0.7, 0.8, 1.0], 
-# 				[-1.0, -1.0, -1.0, 0.0, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8], 
-# 				[-1.0, 0.1, 0.1, 0.2, 0.3, 0.4, 0.4, 0.4, 0.5, 0.5], 
-# 				[0.1, 0.3, 0.3, 0.4, 0.4, 0.4, 0.3, 0.3, 0.2, 0.3], 
-# 				[0.4, 0.5, 0.5, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0], 
-# 				[0.6, 0.7, 0.6, 0.5, 0.3, 0.2, 0.0, -1.0, -1.0, -1.0], 
-# 				[0.8, 0.8, 0.7, 0.4, 0.2, 0.0, -1.0, -1.0, -1.0, -1.0]]
-
-# matrices_6c = np.multiply(matrices_4c, 1.5) - np.multiply(matrices_0, 0.5)
-# matrices_7c = np.multiply(matrices_5c, 1.5) - np.multiply(matrices_0, 0.5)
-# matrices_sim2 = np.multiply(matrices_sim1, 1.875) - np.multiply(matrices_0, 0.875)
-
-# matrices_8c = np.multiply(matrices_4c, 1.75) - np.multiply(matrices_0, 0.75)
-# matrices_9c = np.multiply(matrices_5c, 1.75) - np.multiply(matrices_0, 0.75)
-# print(matrices_6c)
-###################################################################################################################
-
-# print(matrices_1)
-matrices = [[[matrices_0[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
-# matrices = [[[matrices_2c[i][j] for k in range(3)] for j in range(32)] for i in range(32)]
-# matrices = [[[matrices_sim2[i][j] for k in range(256)] for j in range(10)] for i in range(10)]
+matrices = [[[matrices_1[i][j] for k in range(256)] for j in range(5)] for i in range(5)]
 
 #define the model to be used
 def conv_cifar10(input_image):
@@ -92,7 +62,7 @@ def conv_cifar10(input_image):
 	fc1 = tf.layers.dense(inputs = pool_flat, units = 5 * 512, activation = tf.nn.relu)
 	fc2 = tf.layers.dense(inputs = fc1, units = 2 * 512, activation = tf.nn.relu)
 	fc3 = tf.layers.dense(inputs = fc2, units = 128, activation = tf.nn.relu)
-	fc_final = tf.layers.dense(inputs = fc3, units = 10)
+	fc_final = tf.layers.dense(inputs = fc3, units = 2)
 	# fc_final = tf.Print(fc_final, [tf.multiply(100.0, tf.nn.softmax(fc_final))], "After softmax : ", summarize = 10)
 
 	return fc_final, weight_1, weight_2, weight_3, weight_4, weight_5

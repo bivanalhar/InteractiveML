@@ -9,7 +9,9 @@ import numpy as np
 from tkinter import *
 from PIL import Image, ImageTk
 import cifar10_func as cf
-import model
+import model_binary as md
+
+np.set_printoptions(threshold = np.nan)
 
 import sys
 sys.path.append("/usr/local/lib/python3.5/dist-packages/tensorflow/models/research/slim")
@@ -46,13 +48,13 @@ names = cf.build_dictionary_for_cifar10_image()
 processed_images = tf.placeholder(tf.float32, shape = (None, 32, 32, 3))
 # processed_images = tf.placeholder(tf.float32, shape = (None, 299, 299, 3))
 
-logits, _, _, _, _, _ = model.conv_cifar10(processed_images)
+logits, _, _, _, _, _ = md.conv_cifar10(processed_images)
 probabilities = tf.nn.softmax(logits)
 
 saver = tf.train.Saver()
 
-checkpoints_dir = "./pretrained/cifar10_model.ckpt"
-saver.restore(session, "./pretrained/cifar10_model.ckpt")
+checkpoints_dir = "./pretrained/cifar10_bin_model.ckpt"
+saver.restore(session, "./pretrained/cifar10_bin_model.ckpt")
 
 # import os
 # with slim.arg_scope(inception.inception_v3_arg_scope()):
@@ -84,14 +86,8 @@ the interface that we have in the bottom of this comment.
 #as we will provide the interface for the feedback model
 #we will provide the platform in the form of image counting
 #and also the matrix that best depicts those feedbacks
-with open("count_img.pickle", "rb") as file:
-	count_img = pickle.load(file)
-
-with open("matrix_img.pickle", "rb") as file:
-	matrix_img = pickle.load(file)
-
-with open("matrix_mul.pickle", "rb") as file:
-	matrix_mul = pickle.load(file)
+with open("matrix_mul_and_count.p", "rb") as file:
+	matrix_mul, count_img = pickle.load(file)
 
 #the main interface will provide the main screen
 #of the program in general. this will just contain the
@@ -143,7 +139,6 @@ class Window(Frame):
 
 		#providing the platform for the interactivity
 		self.count_img = count_img
-		self.matrix_img = matrix_img
 		self.matrix_mul = matrix_mul
 
 		self.init_window()
@@ -158,6 +153,8 @@ class Window(Frame):
 		self.text_bool = True
 		self.explain_bool = True
 		self.segments = None
+		self.data_nbr = None
+		self.labels = None
 
 		self.is_doctor = 0
 
@@ -439,7 +436,7 @@ class Window(Frame):
 		name_list = []
 		acc_list = []
 
-		for x in prediction.argsort()[0][-5:]:
+		for x in prediction.argsort()[0][-2:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
 			acc_list.insert(0, 100 * float(prediction[0, x]))
 
@@ -481,7 +478,7 @@ class Window(Frame):
 		name_list = []
 		acc_list = []
 
-		for x in prediction.argsort()[0][-5:]:
+		for x in prediction.argsort()[0][-2:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
 			acc_list.insert(0, 100 * float(prediction[0, x]))
 
@@ -514,7 +511,7 @@ class Window(Frame):
 		name_list = []
 		id_list = []
 
-		for x in prediction[0].argsort()[0][-3:]:
+		for x in prediction[0].argsort()[0][-2:]:
 			name_list.insert(0, names[x].split(',')[0].capitalize())
 			id_list.insert(0, x)
 
@@ -528,8 +525,8 @@ class Window(Frame):
 		button_2 = Button(self.top_complex, text = name_list[1], command = lambda: self.ExplainAndShow(name = name_list[1], id_ = id_list[1], explainer = explainer, image = prediction[1]), bg = "tan", width = 27)
 		button_2.place(x = 675, y = 330)
 
-		button_3 = Button(self.top_complex, text = name_list[2], command = lambda: self.ExplainAndShow(name = name_list[2], id_ = id_list[2], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 27)
-		button_3.place(x = 675, y = 360)
+		# button_3 = Button(self.top_complex, text = name_list[2], command = lambda: self.ExplainAndShow(name = name_list[2], id_ = id_list[2], explainer = explainer, image = prediction[1]), bg = "turquoise", width = 27)
+		# button_3.place(x = 675, y = 360)
 
 	def ExplainAndShow(self, name = None, id_ = None, explainer = None, image = None):
 		if self.explain_bool or (id_ != self.id_current):
@@ -548,12 +545,15 @@ class Window(Frame):
 
 			# print(np.max(image), np.min(image))
 
-			explanation, self.segments = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 5, hide_color = 0, num_samples = 1000)
+			explanation, self.segments, self.data_nbr, self.labels = explainer.explain_instance_and_get_segments(image, predict_fn, top_labels = 2, hide_color = 0, num_samples = 100000, distance_metric = 'l2')
 			temp, _ = explanation.get_image_and_mask(id_, positive_only = False, num_features = 30, hide_rest = False)
 			img_save = mark_boundaries(image = temp / 2 + 0.5, label_img = self.segments, color = (0,0,0))
 			plt.imsave(fname = "explain_complex.jpeg", arr = img_save)
 
 			self.id_current = id_
+			# print(self.data_nbr)
+			# print(np.shape(self.data_nbr))
+			# print(self.segments)
 
 			explain_info = Image.open("explain_complex.jpeg")
 			explain_info = explain_info.resize((240, 240), Image.ANTIALIAS)
@@ -580,7 +580,7 @@ class Window(Frame):
 		name_list = []
 		acc_list = []
 
-		for x in prediction.argsort()[0][-5:]:
+		for x in prediction.argsort()[0][-2:]:
 			name_list.insert(0, names[x].split(",")[0].capitalize())
 			acc_list.insert(0, 100 * float(prediction[0, x]))
 
@@ -590,10 +590,10 @@ class Window(Frame):
 			frame_bio.pack_propagate(False)
 			frame_bio.place(x = 0, y = 220)
 
-			if acc_list[0] > 0.7:
+			if acc_list[0] > 0.75:
 				classify_text = "(high confidence)"
 				background = "yellow2"
-			elif acc_list[0] > 0.4:
+			elif acc_list[0] > 0.5:
 				classify_text = "(medium confidence)"
 				background = "lightgrey"
 			else:
@@ -698,8 +698,12 @@ class Window(Frame):
 	def togglefinish(self):
 		self.sp_finish = True
 
-		self.count_img += 1
+		#saving the currently saved value
+		with open("matrix_mul_and_count_before.p", "wb") as file:
+			pickle.dump([self.matrix_mul, self.count_img], file)
+
 		result_image = np.zeros(np.shape(np.transpose(self.transformed_image, (2, 0, 1))[0]))
+		matrix_img = np.array([[0.0 for i in range(5)] for j in range(5)])
 		# print(np.shape(result_image))
 
 		print(self.list_sp_outcast)
@@ -707,31 +711,29 @@ class Window(Frame):
 			for height in range(len(result_image[0])):
 				if self.segments[width, height] in self.list_sp_outcast:
 					result_image[width, height] = 1
+		# print(np.array(result_image))
 
+		# print(self.matrix_img)
 		for i in range(5):
 			for j in range(5):
 				truncate_matrix = [[result_image[k][l] for l in range(4*j, 4*j+16)] for k in range(4*i, 4*i+16)]
-				if np.sum(truncate_matrix) >= 128:
-					self.matrix_img[i][j] += 1
+				if np.sum(truncate_matrix) > 0.4 * 256:
+					matrix_img[i][j] = -1.0
+				else:
+					matrix_img[i][j] = 1.0
+		# print(self.matrix_img)
 
-		print("image counted for feedback is %d" % (self.count_img))
-		if self.count_img == 10:
-			print("the matrix representing the affected region shall be")
-			print(self.matrix_img)
-			for i in range(5):
-				for j in range(5):
-					self.matrix_mul[i][j] -= (self.matrix_mul[i][j] * self.matrix_img[i][j] / 10)
-					self.matrix_mul[i][j] += (self.matrix_img[i][j] / 20)
-					self.matrix_img[i][j] = 0
-			self.count_img = 0
-			print(self.matrix_mul)
+		temp_matrix = np.multiply(self.matrix_mul, self.count_img)
+		temp_matrix = np.add(temp_matrix, matrix_img)
+		self.matrix_mul = np.divide(temp_matrix, self.count_img + 1)
 
-		with open("count_img.pickle", "wb") as file:
-			pickle.dump(self.count_img, file)
-		with open("matrix_img.pickle", "wb") as file:
-			pickle.dump(self.matrix_img, file)
-		with open("matrix_mul.pickle", "wb") as file:
-			pickle.dump(self.matrix_mul, file)
+		self.count_img += 1
+
+		print(self.matrix_mul, self.count_img)
+
+		with open("matrix_mul_and_count.p", "wb") as file:
+			pickle.dump([self.matrix_mul, self.count_img], file)
+
 		# name_file = input("Put the name of the modified file below\n")
 		# plt.imsave(fname = name_file + ".jpeg", arr = result_image)
 
